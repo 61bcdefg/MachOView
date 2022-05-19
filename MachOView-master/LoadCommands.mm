@@ -11,6 +11,10 @@
 #include <set>
 #include <map>
 
+#ifdef __arm64__
+#include "i386_thread_status.h"
+#endif
+
 #import "Common.h"
 #import "LoadCommands.h"
 #import "ReadWrite.h"
