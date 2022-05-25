@@ -250,7 +250,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
 //----------------------------------------------------------------------------
 - (void)saveAttributestoFile:(FILE *)pFile
 {
-  uint32_t numAttributes = [attributes count];
+  uint32_t numAttributes = static_cast<uint32_t>([attributes count]);
   fwrite (&numAttributes, sizeof(uint32_t), 1, pFile);
   
   for (NSString * key in [attributes allKeys])
@@ -310,7 +310,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
   
   if (coloumnsOffset == 0) // isSaved == NO
   {
-    uint32_t filePos = ftell(pFile);
+    uint32_t filePos = static_cast<uint32_t>(ftell(pFile));
     [self writeString:coloumns.offsetStr toFile:(FILE *)pFile];
     [self writeString:coloumns.dataStr toFile:(FILE *)pFile];
     [self writeString:coloumns.descriptionStr toFile:(FILE *)pFile];
@@ -338,7 +338,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
       attributes = _attributes;
     }
     
-    uint32_t filePos = ftell(pFile);
+    uint32_t filePos = static_cast<uint32_t>(ftell(pFile));
     [self saveAttributestoFile:(FILE *)pFile];
     dirty = NO;
     attributesOffset = filePos;
@@ -680,7 +680,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
 //----------------------------------------------------------------------------
 - (void)saveIndexes
 {
-  uint32_t rowCount = [rows count];
+  uint32_t rowCount = static_cast<uint32_t>([rows count]);
   fwrite(&rowCount, sizeof(uint32_t), 1, swapFile);
 
   for (MVRow * row in rows)
@@ -883,7 +883,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
   MVLayout * layout = [userInfo objectForKey:MVLayoutUserInfoKey];
   [layout.dataController updateStatus:MVStatusTaskStarted];
   
-  uint32_t filePos = ftell(pFile);
+  uint32_t filePos = static_cast<uint32_t>(ftell(pFile));
   details.swapFile = pFile;
   [details saveIndexes];
   detailsOffset = filePos; 

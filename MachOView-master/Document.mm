@@ -420,16 +420,16 @@ enum ViewType
           return;
         }
         
-        [leftView reloadItem:node.parent];
+        [self->leftView reloadItem:node.parent];
      
-        if ([leftView isItemExpanded:node.parent])
+        if ([self->leftView isItemExpanded:node.parent])
         {
-          [leftView reloadItem:node];
+          [self->leftView reloadItem:node];
         }
       }
       else 
       {
-        [leftView reloadItem:dataController.rootNode reloadChildren:YES]; 
+        [self->leftView reloadItem:self->dataController.rootNode reloadChildren:YES];
       }
     });
   }
@@ -456,24 +456,24 @@ enum ViewType
       if (OSAtomicIncrement32(&threadCount) == 1)
       {
           dispatch_async(dispatch_get_main_queue(), ^{
-              [progressIndicator setUsesThreadedAnimation:YES];
-              [progressIndicator startAnimation:nil];
-              [stopButton setHidden:NO];
+              [self->progressIndicator setUsesThreadedAnimation:YES];
+              [self->progressIndicator startAnimation:nil];
+              [self->stopButton setHidden:NO];
           });
       }
     } else if ([threadState isEqualToString:MVStatusTaskPendding]) {
         NSString * statusString = [[notification userInfo] objectForKey:MVStatusPenddingKey];
         if (statusString.length) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [statusText setStringValue:statusString];
+                [self->statusText setStringValue:statusString];
             });
         }
     } else if ([threadState isEqualToString:MVStatusTaskTerminated] == YES) {
       if (OSAtomicDecrement32(&threadCount) == 0){
           dispatch_async(dispatch_get_main_queue(), ^{
-              [progressIndicator stopAnimation:nil];
-              [statusText setStringValue:@""];
-              [stopButton setHidden:YES];
+              [self->progressIndicator stopAnimation:nil];
+              [self->statusText setStringValue:@""];
+              [self->stopButton setHidden:YES];
           });
       }
     }
@@ -557,7 +557,7 @@ enum ViewType
 
   @try 
   {
-    [dataController createLayouts:dataController.rootNode location:0 length:[dataController.fileData length]];
+    [dataController createLayouts:dataController.rootNode location:0 length:static_cast<uint32_t>([dataController.fileData length])];
   }
   @catch (NSException * exception) 
   {

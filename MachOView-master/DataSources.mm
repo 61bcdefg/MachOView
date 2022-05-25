@@ -258,7 +258,7 @@ NSString * const MVScannerErrorMessage  = @"NSScanner error";
       {
         buf[0] = orgstr[s];
         buf[1] = orgstr[s+1];
-        unsigned value = strtoul (buf, NULL, 16);
+        unsigned value = static_cast<unsigned int>(strtoul (buf, NULL, 16));
         [mdata appendBytes:&value length:sizeof(uint8_t)];
       }
       
@@ -276,7 +276,7 @@ NSString * const MVScannerErrorMessage  = @"NSScanner error";
   // option2: group of bytes
   {
     // find out file offset from the row index
-    fileOffset = selectedNode.dataRange.location + 16 * rowIndex + 8 * (colIndex == DATA_HI_COLUMN);
+    fileOffset = static_cast<uint32_t>(selectedNode.dataRange.location + 16 * rowIndex + 8 * (colIndex == DATA_HI_COLUMN));
 
     // create a place holder for new value
     NSMutableData * mdata = [NSMutableData dataWithCapacity:[cellContent length] / 3]; // each element = one byte plus space

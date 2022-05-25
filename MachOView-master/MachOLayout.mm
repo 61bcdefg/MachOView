@@ -170,7 +170,7 @@ using namespace std;
   }
   --segIter;
   uint32_t segOffset = segIter->first;
-  uint32_t segAddr = segIter->second.first;
+  uint64_t segAddr = segIter->second.first;
   return offset - segOffset + segAddr;
 }
 
@@ -222,7 +222,7 @@ using namespace std;
   }
   --sectIter;
   uint32_t sectOffset = sectIter->second.first;
-  uint32_t fileOffset = sectOffset + (rva64 - [self fileOffsetToRVA64:sectOffset]);
+  uint64_t fileOffset = sectOffset + (rva64 - [self fileOffsetToRVA64:sectOffset]);
   NSAssert1(fileOffset < [dataController.fileData length], @"rva is out of range (0x%qX)", rva64);
   return fileOffset;
 }
@@ -275,7 +275,7 @@ _hex2int(char const * a, uint32_t len)
   // _hex2int is supposed to be must faster
   // note: on problems use the traditional scanner!
   
-  fileOffset = _hex2int(CSTRING(offsetStr), [offsetStr length]);
+  fileOffset = _hex2int(CSTRING(offsetStr), static_cast<uint32_t>([offsetStr length]));
   
   if (segmentInfo.empty() || 
       fileOffset < segmentInfo.begin()->first || 
@@ -497,8 +497,8 @@ _hex2int(char const * a, uint32_t len)
     {
       dysymtabNode = [self createDataNode:rootNode
                                   caption:@"Dynamic Symbol Table"
-                                 location:dysymtabRange.location
-                                   length:dysymtabRange.length];
+                                 location:static_cast<uint32_t>(dysymtabRange.location)
+                                   length:static_cast<uint32_t>(dysymtabRange.length)];
     }
   }
   
@@ -550,8 +550,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createSymbolsNode:symtabNode
                       caption:(lastNodeCaption = @"Symbols")
-                     location:symtabNode.dataRange.location
-                       length:symtabNode.dataRange.length];
+                     location:static_cast<uint32_t>(symtabNode.dataRange.location)
+                       length:static_cast<uint32_t>(symtabNode.dataRange.length)];
     }
     @catch(NSException * exception)
     {
@@ -563,8 +563,8 @@ _hex2int(char const * a, uint32_t len)
         @try {
             [self createStrings:stringsNode
                         caption:(lastNodeCaption = @"Strings Parse")
-                       location:stringsNode.dataRange.location
-                         length:stringsNode.dataRange.length];
+                       location:static_cast<uint32_t>(stringsNode.dataRange.location)
+                         length:static_cast<uint32_t>(stringsNode.dataRange.length)];
         } @catch(NSException * exception) {
             [self printException:exception caption:lastNodeCaption];
         }
@@ -650,8 +650,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createTwoLevelHintsNode:twoLevelHintsNode 
                             caption:(lastNodeCaption = @"Hints") 
-                           location:twoLevelHintsNode.dataRange.location
-                             length:twoLevelHintsNode.dataRange.length
+                           location:static_cast<uint32_t>(twoLevelHintsNode.dataRange.location)
+                             length:static_cast<uint32_t>(twoLevelHintsNode.dataRange.length)
                               index:dysymtab_command->iundefsym];
     }
     @catch(NSException * exception)
@@ -666,8 +666,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createSplitSegmentNode:segmentSplitInfoNode 
                            caption:(lastNodeCaption = @"Shared Region Info")
-                          location:segmentSplitInfoNode.dataRange.location
-                            length:segmentSplitInfoNode.dataRange.length
+                          location:static_cast<uint32_t>(segmentSplitInfoNode.dataRange.location)
+                            length:static_cast<uint32_t>(segmentSplitInfoNode.dataRange.length)
                        baseAddress:base_addr];
     }
     @catch(NSException * exception)
@@ -682,8 +682,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createFunctionStartsNode:functionStartsNode 
                              caption:(lastNodeCaption = @"Functions")  
-                            location:functionStartsNode.dataRange.location 
-                              length:functionStartsNode.dataRange.length
+                            location:static_cast<uint32_t>(functionStartsNode.dataRange.location)
+                              length:static_cast<uint32_t>(functionStartsNode.dataRange.length)
                          baseAddress:base_addr];
     }
     @catch(NSException * exception)
@@ -698,8 +698,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createDataInCodeEntriesNode:dataInCodeEntriesNode
                                 caption:(lastNodeCaption = @"Dices")
-                               location:dataInCodeEntriesNode.dataRange.location
-                                 length:dataInCodeEntriesNode.dataRange.length
+                               location:static_cast<uint32_t>(dataInCodeEntriesNode.dataRange.location)
+                                 length:static_cast<uint32_t>(dataInCodeEntriesNode.dataRange.length)
                                 is64Bit:NO];
     }
     @catch(NSException * exception)
@@ -824,8 +824,8 @@ _hex2int(char const * a, uint32_t len)
     {
       dysymtabNode = [self createDataNode:rootNode
                                   caption:@"Dynamic Symbol Table"
-                                 location:dysymtabRange.location
-                                   length:dysymtabRange.length];
+                                 location:static_cast<uint32_t>(dysymtabRange.location)
+                                   length:static_cast<uint32_t>(dysymtabRange.length)];
     }
   }
   
@@ -877,8 +877,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createSymbols64Node:symtabNode
                         caption:(lastNodeCaption = @"Symbols")
-                       location:symtabNode.dataRange.location
-                         length:symtabNode.dataRange.length];
+                       location:static_cast<uint32_t>(symtabNode.dataRange.location)
+                         length:static_cast<uint32_t>(symtabNode.dataRange.length)];
     }
     @catch(NSException * exception)
     {
@@ -890,8 +890,8 @@ _hex2int(char const * a, uint32_t len)
         @try {
             [self createStrings:stringsNode
                         caption:(lastNodeCaption = @"Strings Parse")
-                       location:stringsNode.dataRange.location
-                         length:stringsNode.dataRange.length];
+                       location:static_cast<uint32_t>(stringsNode.dataRange.location)
+                         length:static_cast<uint32_t>(stringsNode.dataRange.length)];
         } @catch(NSException * exception) {
             [self printException:exception caption:lastNodeCaption];
         }
@@ -977,8 +977,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createTwoLevelHintsNode:twoLevelHintsNode 
                             caption:(lastNodeCaption = @"Hints") 
-                           location:twoLevelHintsNode.dataRange.location
-                             length:twoLevelHintsNode.dataRange.length
+                           location:static_cast<uint32_t>(twoLevelHintsNode.dataRange.location)
+                             length:static_cast<uint32_t>(twoLevelHintsNode.dataRange.length)
                               index:dysymtab_command->iundefsym];
     }
     @catch(NSException * exception)
@@ -993,8 +993,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createSplitSegmentNode:segmentSplitInfoNode 
                            caption:(lastNodeCaption = @"Shared Region Info") 
-                          location:segmentSplitInfoNode.dataRange.location
-                            length:segmentSplitInfoNode.dataRange.length
+                          location:static_cast<uint32_t>(segmentSplitInfoNode.dataRange.location)
+                            length:static_cast<uint32_t>(segmentSplitInfoNode.dataRange.length)
                        baseAddress:base_addr];
     }
     @catch(NSException * exception)
@@ -1009,8 +1009,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createFunctionStartsNode:functionStartsNode 
                              caption:(lastNodeCaption = @"Functions")  
-                            location:functionStartsNode.dataRange.location 
-                              length:functionStartsNode.dataRange.length
+                            location:static_cast<uint32_t>(functionStartsNode.dataRange.location)
+                              length:static_cast<uint32_t>(functionStartsNode.dataRange.length)
                          baseAddress:base_addr];
     }
     @catch(NSException * exception)
@@ -1025,8 +1025,8 @@ _hex2int(char const * a, uint32_t len)
     {
       [self createDataInCodeEntriesNode:dataInCodeEntriesNode
                                 caption:(lastNodeCaption = @"Dices")
-                               location:dataInCodeEntriesNode.dataRange.location
-                                 length:dataInCodeEntriesNode.dataRange.length
+                               location:static_cast<uint32_t>(dataInCodeEntriesNode.dataRange.location)
+                                 length:static_cast<uint32_t>(dataInCodeEntriesNode.dataRange.length)
                                 is64Bit:YES];
     }
     @catch(NSException * exception)
@@ -1105,8 +1105,8 @@ _hex2int(char const * a, uint32_t len)
   }
   MVNode * dyldInfoNode = [self createDataNode:rootNode
                                        caption:@"Dynamic Loader Info"
-                                      location:dyldInfoRange.location
-                                        length:dyldInfoRange.length];
+                                      location:static_cast<uint32_t>(dyldInfoRange.location)
+                                        length:static_cast<uint32_t>(dyldInfoRange.length)];
   
   DyldHelper * dyldHelper = [DyldHelper dyldHelperWithSymbols:symbolNames is64Bit:[self is64bit]];
   
@@ -1341,27 +1341,27 @@ struct CompareSectionByName
           [self createCStringsNode:sectionNode 
                            caption:(lastNodeCaption = @"C String Literals")
                           location:section_64->offset + imageOffset
-                            length:section_64->size]; break;
+                            length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_4BYTE_LITERALS:
           [self createLiteralsNode:sectionNode 
                            caption:(lastNodeCaption = @"Floating Point Literals")
                           location:section_64->offset + imageOffset
-                            length:section_64->size
+                            length:static_cast<uint32_t>(section_64->size)
                             stride:4]; break;
           
         case S_8BYTE_LITERALS:
           [self createLiteralsNode:sectionNode 
                            caption:(lastNodeCaption = @"Floating Point Literals")
                           location:section_64->offset + imageOffset
-                            length:section_64->size
+                            length:static_cast<uint32_t>(section_64->size)
                             stride:8]; break;
           
         case S_16BYTE_LITERALS:
           [self createLiteralsNode:sectionNode 
                            caption:(lastNodeCaption = @"Floating Point Literals")
                           location:section_64->offset + imageOffset
-                            length:section_64->size
+                            length:static_cast<uint32_t>(section_64->size)
                             stride:16]; break;
       }
     }
@@ -1389,43 +1389,43 @@ struct CompareSectionByName
           [self createPointers64Node:sectionNode 
                              caption:(lastNodeCaption = @"Literal Pointers")
                             location:section_64->offset + imageOffset
-                              length:section_64->size]; break;
+                              length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_MOD_INIT_FUNC_POINTERS:
           [self createPointers64Node:sectionNode 
                              caption:(lastNodeCaption = @"Module Init Func Pointers") 
                             location:section_64->offset + imageOffset
-                              length:section_64->size]; break;
+                              length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_MOD_TERM_FUNC_POINTERS:
           [self createPointers64Node:sectionNode 
                              caption:(lastNodeCaption = @"Module Term Func Pointers") 
                             location:section_64->offset + imageOffset
-                              length:section_64->size]; break;
+                              length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_LAZY_SYMBOL_POINTERS:
           [self createIndPointers64Node:sectionNode 
                                 caption:(lastNodeCaption = @"Lazy Symbol Pointers")
                                location:section_64->offset + imageOffset
-                                 length:section_64->size]; break;
+                                 length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_NON_LAZY_SYMBOL_POINTERS:
           [self createIndPointers64Node:sectionNode 
                                 caption:(lastNodeCaption = @"Non-Lazy Symbol Pointers")
                                location:section_64->offset + imageOffset
-                                 length:section_64->size]; break;
+                                 length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_LAZY_DYLIB_SYMBOL_POINTERS:
           [self createIndPointers64Node:sectionNode 
                                 caption:(lastNodeCaption = @"Lazy Dylib Symbol Pointers")
                                location:section_64->offset + imageOffset
-                                 length:section_64->size]; break;
+                                 length:static_cast<uint32_t>(section_64->size)]; break;
           
         case S_SYMBOL_STUBS:
           [self createIndStubs64Node:sectionNode 
                              caption:(lastNodeCaption = @"Symbol Stubs")
                             location:section_64->offset + imageOffset
-                              length:section_64->size
+                              length:static_cast<uint32_t>(section_64->size)
                               stride:section_64->reserved2]; break;
           
         default:;
@@ -1541,7 +1541,7 @@ struct CompareSectionByName
           [self createCFINode:sectionNode
                       caption:(lastNodeCaption = [NSString stringWithFormat:@"Call Frame %@", [self findSymbolAtRVA64:CIE_addr]])
                      location:location
-                       length:section_64->offset + imageOffset + section_64->size - location]; // upper bound
+                       length:static_cast<uint32_t>(section_64->offset + imageOffset + section_64->size - location)]; // upper bound
         }
         location += length + /*length itself */ sizeof(uint32_t);
       } while (location - section_64->offset - imageOffset < section_64->size);
@@ -1581,14 +1581,14 @@ struct CompareSectionByName
     {
       for (ExceptionFrameMap::iterator ehFrameIter = lsdaInfo.begin(); ehFrameIter != lsdaInfo.end();)
       {
-        uint32_t lsdaAddr = ehFrameIter->first;
-        uint32_t frameAddr = ehFrameIter->second;
+        uint32_t lsdaAddr = static_cast<uint32_t>(ehFrameIter->first);
+        uint32_t frameAddr = static_cast<uint32_t>(ehFrameIter->second);
         
         uint32_t location = [self RVAToFileOffset:lsdaAddr];
         
-        uint32_t length = (++ehFrameIter != lsdaInfo.end() 
-                           ? [self RVAToFileOffset:ehFrameIter->first]
-                           : imageOffset + section->offset + section->size) - location;
+        uint32_t length = static_cast<uint32_t>((++ehFrameIter != lsdaInfo.end()
+                           ? [self RVAToFileOffset:static_cast<uint32_t>(ehFrameIter->first)]
+                           : imageOffset + section->offset + section->size) - location);
         
         [self createLSDANode:sectionNode 
                      caption:(lastNodeCaption = [NSString stringWithFormat:@"LSDA %@",[self findSymbolAtRVA:lsdaAddr]])
@@ -1637,9 +1637,9 @@ struct CompareSectionByName
         
         uint32_t location = [self RVA64ToFileOffset:lsdaAddr];
         
-        uint32_t length = (++ehFrameIter != lsdaInfo.end() 
+        uint32_t length = static_cast<uint32_t>((++ehFrameIter != lsdaInfo.end()
                            ? [self RVA64ToFileOffset:ehFrameIter->first]
-                           : section_64->offset + section_64->size) - location;
+                           : section_64->offset + section_64->size) - location);
         
         [self createLSDANode:sectionNode 
                      caption:(lastNodeCaption = [NSString stringWithFormat:@"LSDA %@",[self findSymbolAtRVA64:lsdaAddr]])
@@ -1837,7 +1837,7 @@ struct CompareSectionByName
       [self createObjC2Pointer64ListNode:sectionNode 
                                  caption:(lastNodeCaption = @"ObjC2 Class List") 
                                 location:section_64->offset + imageOffset 
-                                  length:section_64->size
+                                  length:static_cast<uint32_t>(section_64->size)
                                 pointers:objcClassPointers];
     }
 
@@ -1849,7 +1849,7 @@ struct CompareSectionByName
       [self createObjC2Pointer64ListNode:sectionNode 
                                  caption:(lastNodeCaption = @"ObjC2 References") 
                                 location:section_64->offset + imageOffset 
-                                  length:section_64->size
+                                  length:static_cast<uint32_t>(section_64->size)
                                 pointers:objcClassReferences];
     }
     
@@ -1861,7 +1861,7 @@ struct CompareSectionByName
       [self createObjC2Pointer64ListNode:sectionNode 
                                  caption:(lastNodeCaption = @"ObjC2 References") 
                                 location:section_64->offset + imageOffset 
-                                  length:section_64->size
+                                  length:static_cast<uint32_t>(section_64->size)
                                 pointers:objcSuperReferences];
     }
 
@@ -1873,7 +1873,7 @@ struct CompareSectionByName
       [self createObjC2Pointer64ListNode:sectionNode 
                                  caption:(lastNodeCaption = @"ObjC2 Category List")
                                 location:section_64->offset + imageOffset 
-                                  length:section_64->size
+                                  length:static_cast<uint32_t>(section_64->size)
                                 pointers:objcCategoryPointers];
     }
     
@@ -1885,7 +1885,7 @@ struct CompareSectionByName
       [self createObjC2Pointer64ListNode:sectionNode 
                                  caption:(lastNodeCaption = @"ObjC2 Pointer List")
                                 location:section_64->offset + imageOffset 
-                                  length:section_64->size
+                                  length:static_cast<uint32_t>(section_64->size)
                                 pointers:objcProtocolPointers];
     }
     
@@ -1897,7 +1897,7 @@ struct CompareSectionByName
       [self createObjC2MsgRefs64Node:sectionNode 
                              caption:(lastNodeCaption = @"ObjC2 Message References") 
                             location:section_64->offset + imageOffset 
-                              length:section_64->size];
+                              length:static_cast<uint32_t>(section_64->size)];
     }
     
     section_64 = [self findSection64ByName:"__image_info" andSegment:"__OBJC"];
@@ -1908,7 +1908,7 @@ struct CompareSectionByName
       [self createObjCImageInfoNode:sectionNode 
                             caption:(lastNodeCaption = @"ObjC2 Image Info") 
                            location:section_64->offset + imageOffset 
-                             length:section_64->size];
+                             length:static_cast<uint32_t>(section_64->size)];
     }
     
     section_64 = [self findSection64ByName:"__cfstring" andSegment:NULL];
@@ -1917,7 +1917,7 @@ struct CompareSectionByName
       [self createObjCCFStrings64Node:sectionNode 
                               caption:(lastNodeCaption = @"ObjC CFStrings") 
                              location:section_64->offset + imageOffset 
-                               length:section_64->size];
+                               length:static_cast<uint32_t>(section_64->size)];
     }
   }
   @catch(NSException * exception)
@@ -2023,7 +2023,7 @@ struct CompareSectionByName
         [self createTextNode:sectionNode 
                      caption:(lastNodeCaption = @"Assembly") 
                     location:section_64->offset + imageOffset 
-                      length:section_64->size
+                      length:static_cast<uint32_t>(section_64->size)
                       reloff:section_64->reloff + imageOffset
                       nreloc:section_64->nreloc
                    extreloff:dysymtab_command ? dysymtab_command->extreloff : 0
@@ -2267,8 +2267,8 @@ struct CompareSectionByName
                          :@"CPU SubType"
                          :@""];
 
-  if (mach_header_64->cpusubtype & CPU_SUBTYPE_LIB64 == CPU_SUBTYPE_LIB64
-          && !mach_header_64->cpusubtype == 0x80000002) [node.details appendRow:@"":@"":@"80000000":@"CPU_SUBTYPE_LIB64"];
+  if ((mach_header_64->cpusubtype & CPU_SUBTYPE_LIB64) == CPU_SUBTYPE_LIB64
+          && !(mach_header_64->cpusubtype == ((cpu_subtype_t) 0x80000002))) [node.details appendRow:@"":@"":@"80000000":@"CPU_SUBTYPE_LIB64"];
 
   if (mach_header_64->cputype == CPU_TYPE_X86_64)
   {
@@ -2278,7 +2278,7 @@ struct CompareSectionByName
   {
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_ALL)  [node.details appendRow:@"":@"":@"00000000":@"CPU_SUBTYPE_ARM64_ALL"];
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_V8)   [node.details appendRow:@"":@"":@"00000001":@"CPU_SUBTYPE_ARM64_V8"];
-    if (mach_header_64->cpusubtype == 0x80000002)  [node.details appendRow:@"":@"":@"80000002":@"CPU_SUBTYPE_ARM64E"];
+    if (mach_header_64->cpusubtype == ((cpu_subtype_t) 0x80000002))  [node.details appendRow:@"":@"":@"80000002":@"CPU_SUBTYPE_ARM64E"];
   }
 
   
@@ -2485,8 +2485,8 @@ struct CompareSectionByName
                                                    string(section_64->segname,16).c_str(),
                                                    string(section_64->sectname,16).c_str()]
                                          location:section_64->offset + imageOffset
-                                           length:(section_64->flags & SECTION_TYPE) == S_ZEROFILL ||
-                                                  (section_64->flags & SECTION_TYPE) == S_GB_ZEROFILL ? 0 : section_64->size];
+                                           length:static_cast<uint32_t>((section_64->flags & SECTION_TYPE) == S_ZEROFILL ||
+                                                  (section_64->flags & SECTION_TYPE) == S_GB_ZEROFILL ? 0 : section_64->size)];
       
       [sectionNode.userInfo addEntriesFromDictionary:[self userInfoForSection64:section_64]];
       
@@ -2504,8 +2504,8 @@ struct CompareSectionByName
   {
     MVNode * relocsNode = [self createDataNode:rootNode
                                        caption:@"Relocations"
-                                      location:relocsRange.location
-                                        length:relocsRange.length];
+                                      location:static_cast<uint32_t>(relocsRange.location)
+                                        length:static_cast<uint32_t>(relocsRange.length)];
     
     [relocsNode.userInfo addEntriesFromDictionary:[self userInfoForRelocs]];
   }
@@ -2528,21 +2528,21 @@ struct CompareSectionByName
 {
   NSBlockOperation * linkEditOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@"LinkEdit Parsing ..."];
+      if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@"LinkEdit Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processLinkEdit]; else [self processLinkEdit64];
     }
 #if DEBUG
     NSLog(@"%@: LinkEdit finished parsing. (%lu symbols found)", self, 
-          [self is64bit] == NO ? symbols.size() : symbols_64.size());
+          [self is64bit] == NO ? self->symbols.size() : self->symbols_64.size());
 #endif
   }];
   
   NSBlockOperation * sectionRelocsOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@"Section relocations Parsing ..."];
+      if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@"Section relocations Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processSectionRelocs]; else [self processSectionRelocs64];
     }
@@ -2553,8 +2553,8 @@ struct CompareSectionByName
 
   NSBlockOperation * dyldInfoOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-       [dataController updateStatus:MVStatusTaskPendding :@"Dyld info  Parsing ..."];
+    if ([self->backgroundThread isCancelled]) return;
+       [self->dataController updateStatus:MVStatusTaskPendding :@"Dyld info  Parsing ..."];
     @autoreleasepool {
       [self processDyldInfo];
     }
@@ -2565,8 +2565,8 @@ struct CompareSectionByName
 
   NSBlockOperation * sectionOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@"Section contents Parsing ..."];
+    if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@"Section contents Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processSections]; else [self processSections64];
     }
@@ -2577,8 +2577,8 @@ struct CompareSectionByName
 
   NSBlockOperation * EHFramesOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@" Exception Frames Parsing ..."];
+      if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@" Exception Frames Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processEHFrames]; else [self processEHFrames64];
     }
@@ -2589,20 +2589,20 @@ struct CompareSectionByName
 
   NSBlockOperation * LSDAsOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@" Lang Spec Data Areas  Parsing ..."];
+    if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@" Lang Spec Data Areas  Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processLSDA]; else [self processLSDA64];
     }
 #if DEBUG
-    NSLog(@"%@: Lang Spec Data Areas finished parsing. (%lu LSDAs found)", self, lsdaInfo.size());
+      NSLog(@"%@: Lang Spec Data Areas finished parsing. (%lu LSDAs found)", self, self->lsdaInfo.size());
 #endif
   }];
 
   NSBlockOperation * objcSectionOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@" ObjC Section contents  Parsing ..."];
+      if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@" ObjC Section contents  Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processObjcSections]; else [self processObjcSections64];
     }
@@ -2613,8 +2613,8 @@ struct CompareSectionByName
 
   NSBlockOperation * codeSectionsOperation = [NSBlockOperation blockOperationWithBlock:^
   {
-    if ([backgroundThread isCancelled]) return;
-      [dataController updateStatus:MVStatusTaskPendding :@" Code sections Parsing ..."];
+      if ([self->backgroundThread isCancelled]) return;
+      [self->dataController updateStatus:MVStatusTaskPendding :@" Code sections Parsing ..."];
     @autoreleasepool {
       if ([self is64bit] == NO) [self processCodeSections]; else [self processCodeSections64];
     }

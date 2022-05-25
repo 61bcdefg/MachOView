@@ -248,7 +248,7 @@
                                               length:0]; // length will be determined in function
   
   // skip symbol and string table for now
-  uint32_t symtabOffset = NSMaxRange(symtabHeaderNode.dataRange);
+  uint32_t symtabOffset = static_cast<uint32_t>(NSMaxRange(symtabHeaderNode.dataRange));
   NSRange range = NSMakeRange(symtabOffset,0);
   uint32_t symtabSize = [dataController read_uint32:range lastReadHex:&lastReadHex] + sizeof(uint32_t);
   uint32_t strtabOffset = symtabOffset + symtabSize;
@@ -266,7 +266,7 @@
     
     MVObjectInfo * objectInfo = [objectInfoMap objectForKey:[NSNumber numberWithUnsignedLong:location]];
     
-    uint32_t objectOffset = NSMaxRange(headerNode.dataRange); // starts right after the header
+    uint32_t objectOffset = static_cast<uint32_t>(NSMaxRange(headerNode.dataRange)); // starts right after the header
     uint32_t objectSize = objectInfo.length;
     
     // create Mach-O object layout

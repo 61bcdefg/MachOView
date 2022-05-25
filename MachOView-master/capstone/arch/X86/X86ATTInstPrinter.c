@@ -716,7 +716,7 @@ static void printOperand(MCInst *MI, unsigned OpNo, SStream *O)
 
 						SStream_concat(O, "$0x%"PRIx64, imm);
 					} else {
-						if (imm == 0x8000000000000000LL)  // imm == -imm
+						if (imm == (int64_t)0x8000000000000000LL)  // imm == -imm
 							SStream_concat0(O, "$0x8000000000000000");
 						else if (imm < -HEX_THRESHOLD)
 							SStream_concat(O, "$-0x%"PRIx64, -imm);

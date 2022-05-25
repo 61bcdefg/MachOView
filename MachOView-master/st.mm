@@ -1411,12 +1411,12 @@ static AsmFootPrint const SDK109Target104X86 = {
   
   // find file offset of the entry point
   uint32_t offset = [self is64bit] == NO 
-                      ? [self RVAToFileOffset:entryPoint] 
+                      ? [self RVAToFileOffset:static_cast<uint32_t>(entryPoint)]
                       : [self RVA64ToFileOffset:entryPoint];
   
   NSLog(@"%@: file offset of OEP: 0x%X", self, offset);
   
-  uint32_t dataLength = [dataController.fileData length];
+  uint32_t dataLength = static_cast<uint32_t>([dataController.fileData length]);
   
   if (offset >= dataLength)
   {

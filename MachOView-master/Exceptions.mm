@@ -350,8 +350,8 @@ using namespace std;
                                  :lastReadHex
                                  :@"Personality Routine"
                                  :[self is64bit] == NO
-                                    ? [self guessSymbolUsingEncoding:PR_encoding atOffset:range.location withValue:(uint32_t &)PR_offset]
-                                    : [self guessSymbol64UsingEncoding:PR_encoding atOffset:range.location withValue:PR_offset]];
+                                    ? [self guessSymbolUsingEncoding:PR_encoding atOffset:static_cast<uint32_t>(range.location) withValue:(uint32_t &)PR_offset]
+                                    : [self guessSymbol64UsingEncoding:PR_encoding atOffset:static_cast<uint32_t>(range.location) withValue:PR_offset]];
         } break;
       
         case 'R':
@@ -421,8 +421,8 @@ using namespace std;
     }
     
     uint64_t FDE_CIEpointer = ([self is64bit] == NO 
-                                ? [self fileOffsetToRVA:range.location] 
-                                : [self fileOffsetToRVA64:range.location]) - FDE_CIEvalue;
+                                ? [self fileOffsetToRVA:static_cast<uint32_t>(range.location)]
+                                : [self fileOffsetToRVA64:static_cast<uint32_t>(range.location)]) - FDE_CIEvalue;
 
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
@@ -438,8 +438,8 @@ using namespace std;
                            :lastReadHex
                            :@"PC Begin"
                            :[self is64bit] == NO
-                              ? (symbolName = [self guessSymbolUsingEncoding:Pointer_encoding atOffset:range.location withValue:(uint32_t &)PCBegin_addr])
-                              : (symbolName = [self guessSymbol64UsingEncoding:Pointer_encoding atOffset:range.location withValue:PCBegin_addr])];
+                              ? (symbolName = [self guessSymbolUsingEncoding:Pointer_encoding atOffset:static_cast<uint32_t>(range.location) withValue:(uint32_t &)PCBegin_addr])
+                              : (symbolName = [self guessSymbol64UsingEncoding:Pointer_encoding atOffset:static_cast<uint32_t>(range.location) withValue:PCBegin_addr])];
 
     //PC Range	(Required)
     // An encoded constant that indicates the number of bytes of instructions associated with this FDE.
@@ -470,8 +470,8 @@ using namespace std;
                                :lastReadHex
                                :@"LSDA"
                                :[self is64bit] == NO 
-                                  ? [self guessSymbolUsingEncoding:LSDA_encoding atOffset:range.location withValue:(uint32_t &)LSDA_addr]
-                                  : [self guessSymbol64UsingEncoding:LSDA_encoding atOffset:range.location withValue:LSDA_addr]];
+                                  ? [self guessSymbolUsingEncoding:LSDA_encoding atOffset:static_cast<uint32_t>(range.location) withValue:(uint32_t &)LSDA_addr]
+                                  : [self guessSymbol64UsingEncoding:LSDA_encoding atOffset:static_cast<uint32_t>(range.location) withValue:LSDA_addr]];
         
         if (LSDA_addr != 0)
         {
@@ -563,7 +563,7 @@ using namespace std;
   if (typeTableFormat != DW_EH_PE_omit)
   {
     uint64_t typeTableBaseOffset = [dataController read_uleb128:range lastReadHex:&lastReadHex];
-    typeTableBaseLocation = NSMaxRange(range) + typeTableBaseOffset;
+    typeTableBaseLocation = static_cast<uint32_t>(NSMaxRange(range) + typeTableBaseOffset);
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"Type Table Base"
@@ -646,11 +646,11 @@ using namespace std;
       
       if (index > 0)
       {
-        typeIndexes.insert(index);
+        typeIndexes.insert(static_cast<const int &>(index));
       }
       else if (index < 0)
       {
-        exceptionSpecs.insert(index);
+        exceptionSpecs.insert(static_cast<const int &>(index));
       }
     
       int64_t nextAction = [dataController read_sleb128:range lastReadHex:&lastReadHex]; currentAction += range.length;
@@ -683,7 +683,7 @@ using namespace std;
       // note: they are SLEB128 entries
       for (;;)
       {
-        index = [dataController read_sleb128:range lastReadHex:&lastReadHex];
+        index = static_cast<int32_t>([dataController read_sleb128:range lastReadHex:&lastReadHex]);
         if (index == 0)
         {
           break;
@@ -710,8 +710,8 @@ using namespace std;
                               :lastReadHex
                               :@"Type Info"
                               :[self is64bit] == NO
-                                ? [self guessSymbolUsingEncoding:typeTableFormat atOffset:range.location withValue:(uint32_t &)typeInfo]
-                                : [self guessSymbol64UsingEncoding:typeTableFormat atOffset:range.location withValue:typeInfo]];
+                                ? [self guessSymbolUsingEncoding:static_cast<uint32_t>(typeTableFormat) atOffset:static_cast<uint32_t>(range.location) withValue:(uint32_t &)typeInfo]
+                             : [self guessSymbol64UsingEncoding:static_cast<uint32_t>(typeTableFormat) atOffset:static_cast<uint32_t>(range.location) withValue:typeInfo]];
     }
     
     [node.details setAttributes:MVUnderlineAttributeName,@"YES",nil];
@@ -759,8 +759,8 @@ using namespace std;
                          :lastReadHex
                          :@"Common Enc Array Sect Offset"
                          :[self is64bit] == NO 
-                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:range.location] + commonEncodingsArraySectionOffset]
-                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location] + commonEncodingsArraySectionOffset]];
+                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)] + commonEncodingsArraySectionOffset]
+                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)] + commonEncodingsArraySectionOffset]];
   
   uint32_t commonEncodingsArrayCount = [dataController read_uint32:range lastReadHex:&lastReadHex];
   [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -773,8 +773,8 @@ using namespace std;
                          :lastReadHex
                          :@"Personality Array Sect Offset"
                          :[self is64bit] == NO 
-                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:range.location] + personalityArraySectionOffset]
-                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location] + personalityArraySectionOffset]];
+                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)] + personalityArraySectionOffset]
+                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)] + personalityArraySectionOffset]];
 
   uint32_t personalityArrayCount = [dataController read_uint32:range lastReadHex:&lastReadHex];
   [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -787,8 +787,8 @@ using namespace std;
                          :lastReadHex
                          :@"Index Section Offset"
                          :[self is64bit] == NO 
-                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:range.location] + indexSectionOffset]
-                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location] + indexSectionOffset]];  
+                            ? [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)] + indexSectionOffset]
+                            : [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)] + indexSectionOffset]];
 
   uint32_t indexCount = [dataController read_uint32:range lastReadHex:&lastReadHex];
   [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]

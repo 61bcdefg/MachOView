@@ -406,7 +406,7 @@ struct message_ref64
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(cfstring_t,NSMaxRange(range))
+    MATCH_STRUCT(cfstring_t, static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -465,7 +465,7 @@ struct message_ref64
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(cfstring64_t,NSMaxRange(range))
+    MATCH_STRUCT(cfstring64_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1302,7 +1302,7 @@ struct message_ref64
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(objc_module_t,NSMaxRange(range))
+    MATCH_STRUCT(objc_module_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1541,7 +1541,7 @@ struct message_ref64
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(message_ref,NSMaxRange(range))
+    MATCH_STRUCT(message_ref,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1580,7 +1580,7 @@ struct message_ref64
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(message_ref64,NSMaxRange(range))
+    MATCH_STRUCT(message_ref64,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1652,7 +1652,7 @@ struct message_ref64
   
   for (uint32_t nmeth = 0; nmeth < method_list_t->count; ++nmeth)
   {
-    MATCH_STRUCT(method_t,NSMaxRange(range))
+    MATCH_STRUCT(method_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1730,7 +1730,7 @@ struct message_ref64
   
   for (uint32_t nmeth = 0; nmeth < method64_list_t->count; ++nmeth)
   {
-    MATCH_STRUCT(method64_t,NSMaxRange(range))
+    MATCH_STRUCT(method64_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1808,7 +1808,7 @@ struct message_ref64
   
   for (uint32_t nprop = 0; nprop < objc_property_list->count; ++nprop)
   {
-    MATCH_STRUCT(objc_property,NSMaxRange(range))
+    MATCH_STRUCT(objc_property,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -1880,7 +1880,7 @@ struct message_ref64
   
   for (uint32_t nprop = 0; nprop < objc_property64_list->count; ++nprop)
   {
-    MATCH_STRUCT(objc_property64,NSMaxRange(range))
+    MATCH_STRUCT(objc_property64,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -2294,7 +2294,7 @@ struct message_ref64
   MVNodeSaver nodeSaver;
   node = [parent insertChildWithDetails:[@"ObjC2 Protocol64 List: " stringByAppendingString:caption]
                                location:location 
-                                 length:sizeof(struct protocol64_list_t) + protocol64_list_t->count*sizeof(uint64_t)
+                                 length:static_cast<uint32_t>(sizeof(struct protocol64_list_t) + protocol64_list_t->count*sizeof(uint64_t))
                                   saver:nodeSaver];
   
   NSRange range = NSMakeRange(location,0);
@@ -2380,7 +2380,7 @@ struct message_ref64
   
   for (uint32_t nvar = 0; nvar < ivar_list_t->count; ++nvar)
   {
-    MATCH_STRUCT(ivar_t,NSMaxRange(range))
+    MATCH_STRUCT(ivar_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
@@ -2470,7 +2470,7 @@ struct message_ref64
   
   for (uint32_t nvar = 0; nvar < ivar64_list_t->count; ++nvar)
   {
-    MATCH_STRUCT(ivar64_t,NSMaxRange(range))
+    MATCH_STRUCT(ivar64_t,static_cast<uint32_t>(NSMaxRange(range)))
     
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;

@@ -924,7 +924,7 @@ using namespace std;
   MATCH_STRUCT(mach_header,imageOffset);
   if (mach_header->cputype == CPU_TYPE_I386 || mach_header->cputype == CPU_TYPE_X86_64)
   {
-    MATCH_STRUCT(x86_thread_state,NSMaxRange(range))
+    MATCH_STRUCT(x86_thread_state,static_cast<uint32_t>(NSMaxRange(range)))
     
     [dataController read_uint32:range lastReadHex:&lastReadHex];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -1068,7 +1068,7 @@ using namespace std;
       } uts;
     };
 
-    MATCH_STRUCT(arm_thread_state,NSMaxRange(range))
+    MATCH_STRUCT(arm_thread_state,static_cast<uint32_t>(NSMaxRange(range)))
     
     [dataController read_uint32:range lastReadHex:&lastReadHex];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -2137,7 +2137,7 @@ using namespace std;
                       segment_command_64:segment_command_64];
       
       // preserv segment RVA/size for offset lookup
-      segmentInfo[segment_command_64->fileoff + imageOffset] = make_pair(segment_command_64->vmaddr, segment_command_64->vmsize);
+      segmentInfo[static_cast<unsigned int>(segment_command_64->fileoff + imageOffset)] = make_pair(segment_command_64->vmaddr, segment_command_64->vmsize);
       
       // preserv load segment command info for latter use
       segments_64.push_back(segment_command_64);

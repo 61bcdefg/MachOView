@@ -41,7 +41,7 @@ using namespace std;
   {
     uint32_t ptr = [dataController read_uint32:range lastReadHex:&lastReadHex];
     NSString * symbolName = [NSString stringWithFormat:@"%@->%@",
-                             [self findSymbolAtRVA:[self fileOffsetToRVA:range.location]],
+                             [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)]],
                              [self findSymbolAtRVA:ptr]];
     
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -52,7 +52,7 @@ using namespace std;
     [node.details setAttributes:MVMetaDataAttributeName,symbolName,nil];
     
     [symbolNames setObject:symbolName 
-                    forKey:[NSNumber numberWithUnsignedLong:[self fileOffsetToRVA:range.location]]];
+                    forKey:[NSNumber numberWithUnsignedLong:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)]]];
   }
   
   return node;
@@ -74,7 +74,7 @@ using namespace std;
   {
     uint64_t ptr = [dataController read_uint64:range lastReadHex:&lastReadHex];
     NSString * symbolName = [NSString stringWithFormat:@"%@->%@",
-                             [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location]],
+                             [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)]],
                              [self findSymbolAtRVA64:ptr]];
     
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -85,7 +85,7 @@ using namespace std;
     [node.details setAttributes:MVMetaDataAttributeName,symbolName,nil];
     
     [symbolNames setObject:symbolName 
-                    forKey:[NSNumber numberWithUnsignedLongLong:[self fileOffsetToRVA64:range.location]]];
+                    forKey:[NSNumber numberWithUnsignedLongLong:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)]]];
   }
   
   return node;
@@ -117,13 +117,13 @@ using namespace std;
     // fill in lookup table with C Strings
     if ([self is64bit] == NO)
     {
-      uint32_t rva = [self fileOffsetToRVA:range.location];
+      uint32_t rva = [self fileOffsetToRVA:static_cast<uint32_t>(range.location)];
       [symbolNames setObject:[NSString stringWithFormat:@"0x%X:\"%@\"", rva, symbolName]
                       forKey:[NSNumber numberWithUnsignedLong:rva]];
     }
     else
     {
-      uint64_t rva64 = [self fileOffsetToRVA64:range.location];
+      uint64_t rva64 = [self fileOffsetToRVA64:static_cast<uint32_t>(range.location)];
       [symbolNames setObject:[NSString stringWithFormat:@"0x%qX:\"%@\"", rva64, symbolName]
                       forKey:[NSNumber numberWithUnsignedLongLong:rva64]];
     }
@@ -182,13 +182,13 @@ using namespace std;
     // fill in lookup table with string literals
     if ([self is64bit] == NO)
     {
-      uint32_t rva = [self fileOffsetToRVA:range.location];
+      uint32_t rva = [self fileOffsetToRVA:static_cast<uint32_t>(range.location)];
       [symbolNames setObject:[NSString stringWithFormat:@"0x%X:%@f", rva, literalStr]
                       forKey:[NSNumber numberWithUnsignedLong:rva]]; 
     }
     else
     {
-      uint64_t rva64 = [self fileOffsetToRVA64:range.location];
+      uint64_t rva64 = [self fileOffsetToRVA64:static_cast<uint32_t>(range.location)];
       [symbolNames setObject:[NSString stringWithFormat:@"0x%qX:%@f", rva64, literalStr]
                       forKey:[NSNumber numberWithUnsignedLongLong:rva64]]; 
     }
@@ -212,7 +212,7 @@ using namespace std;
   while (NSMaxRange(range) < location + length)
   {
     [dataController read_uint32:range lastReadHex:&lastReadHex];
-    NSString * symbolName = [self findSymbolAtRVA:[self fileOffsetToRVA:range.location]];
+    NSString * symbolName = [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)]];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"Indirect Pointer"
@@ -239,7 +239,7 @@ using namespace std;
   while (NSMaxRange(range) < location + length)
   {
     [dataController read_uint64:range lastReadHex:&lastReadHex];
-    NSString * symbolName = [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location]];
+    NSString * symbolName = [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)]];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"Indirect Pointer"
@@ -267,7 +267,7 @@ using namespace std;
   while (NSMaxRange(range) < location + length)
   {
     [dataController read_bytes:range length:stride lastReadHex:&lastReadHex];
-    NSString * symbolName = [self findSymbolAtRVA:[self fileOffsetToRVA:range.location]];
+    NSString * symbolName = [self findSymbolAtRVA:[self fileOffsetToRVA:static_cast<uint32_t>(range.location)]];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"Indirect Stub"
@@ -295,7 +295,7 @@ using namespace std;
   while (NSMaxRange(range) < location + length)
   {
     [dataController read_bytes:range length:stride lastReadHex:&lastReadHex];
-    NSString * symbolName = [self findSymbolAtRVA64:[self fileOffsetToRVA64:range.location]];
+    NSString * symbolName = [self findSymbolAtRVA64:[self fileOffsetToRVA64:static_cast<uint32_t>(range.location)]];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"Indirect Stub"
@@ -446,7 +446,7 @@ static AsmFootPrint const fastStubHelperHelperARM =
   NSData * data;
   uint32_t address;
 
-  if ([self matchAsmAtOffset:range.location 
+  if ([self matchAsmAtOffset:static_cast<uint32_t>(range.location)
                 asmFootPrint:hybridStubHelperHelperX86 
                    lineCount:sizeof(hybridStubHelperHelperX86)/FOOTPRINT_STRIDE])
   {
@@ -482,7 +482,7 @@ static AsmFootPrint const fastStubHelperHelperARM =
                            :@""];
 
     data = [dataController read_bytes:range length:5 lastReadHex:&lastReadHex];
-    address = [self fileOffsetToRVA:NSMaxRange(range) + *(uint32_t *)((uint8_t *)data.bytes + 1)];
+    address = [self fileOffsetToRVA:static_cast<uint32_t>(NSMaxRange(range) + *(uint32_t *)((uint8_t *)data.bytes + 1))];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :@"jmpl  dyld_stub_binding_helper"
@@ -511,7 +511,7 @@ static AsmFootPrint const fastStubHelperHelperARM =
     [node.details setAttributes:MVUnderlineAttributeName,@"YES",nil];
     
   }
-  else if ([self matchAsmAtOffset:range.location 
+  else if ([self matchAsmAtOffset:static_cast<uint32_t>(range.location)
                      asmFootPrint:fastStubHelperHelperX86 
                         lineCount:sizeof(fastStubHelperHelperX86)/FOOTPRINT_STRIDE])
   {

@@ -403,7 +403,7 @@ using namespace std;
                                     ? [NSString stringWithFormat:@"-0x%X",-relocAddend] 
                                     : [NSString stringWithFormat:@"0x%X",relocAddend]];
           }
-          uint32_t relocValue = nlist_64->n_value - prev_nlist_64->n_value + relocAddend;
+          uint32_t relocValue = static_cast<uint32_t>(nlist_64->n_value - prev_nlist_64->n_value + relocAddend);
           
           // update real data
           [self addRelocAtFileOffset:relocLocation withLength:relocLength andValue:relocValue];
@@ -436,7 +436,7 @@ using namespace std;
         {
           // 32bit signed PC Rel
           NSParameterAssert(relocation_info->r_pcrel == true);
-          uint32_t relocValue = nlist_64->n_value - relocation_info->r_address - baseAddress - relocLength;
+          uint32_t relocValue = static_cast<uint32_t>(nlist_64->n_value - relocation_info->r_address - baseAddress - relocLength);
           uint32_t relocAddend = [dataController read_uint32:rangeReloc];
 
           if (mach_header_64->cputype == CPU_TYPE_X86_64)
@@ -506,7 +506,7 @@ using namespace std;
                                     ? [NSString stringWithFormat:@"-0x%X",-relocAddend] 
                                     : [NSString stringWithFormat:@"0x%X",relocAddend]];
           }
-          uint32_t relocValue = *symbols_64.begin() - nlist_64 - 1;
+          uint32_t relocValue = static_cast<uint32_t>(*symbols_64.begin() - nlist_64 - 1);
           relocValue -= relocation_info->r_address + baseAddress + relocLength; // it is PC relative
           
           // update real data
@@ -849,7 +849,7 @@ using namespace std;
                              :[NSString stringWithFormat:@"%u", nlist->n_value]];
       
       // fill in lookup table with undefined sybols (key equals (-1) * index)
-      uint32_t key = *symbols.begin() - nlist - 1;
+      uint32_t key = static_cast<uint32_t>(*symbols.begin() - nlist - 1);
       [symbolNames setObject:symbolName
                       forKey:[NSNumber numberWithUnsignedLong:key]];
     }
@@ -1052,7 +1052,7 @@ using namespace std;
 
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(dylib_reference, NSMaxRange(range))
+    MATCH_STRUCT(dylib_reference, static_cast<uint32_t>(NSMaxRange(range)))
     
     if (dylib_reference->isym >= symbols.size())
     {
@@ -1106,7 +1106,7 @@ using namespace std;
   
   for (uint32_t nindsym = 0; nindsym < length / sizeof(uint32_t); ++nindsym)
   {
-    uint32_t nsect = sections.size();
+    uint32_t nsect = static_cast<uint32_t>(sections.size());
     while (--nsect > 0)
     {
       struct section const * section = [self getSectionByIndex:nsect];
@@ -1243,7 +1243,7 @@ using namespace std;
   
   for (uint32_t nindsym = 0; nindsym < length / sizeof(uint32_t); ++nindsym)
   {
-    uint32_t nsect = sections_64.size();
+    uint32_t nsect = static_cast<uint32_t>(sections_64.size());
     while (--nsect > 0)
     {
       struct section_64 const * section_64 = [self getSection64ByIndex:nsect];
@@ -1378,7 +1378,7 @@ using namespace std;
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(dylib_table_of_contents, NSMaxRange(range))
+    MATCH_STRUCT(dylib_table_of_contents, static_cast<uint32_t>(NSMaxRange(range)))
     
     if (dylib_table_of_contents->symbol_index >= symbols.size())
     {
@@ -1429,7 +1429,7 @@ using namespace std;
 
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(dylib_table_of_contents, NSMaxRange(range))
+    MATCH_STRUCT(dylib_table_of_contents, static_cast<uint32_t>(NSMaxRange(range)))
     
     if (dylib_table_of_contents->symbol_index >= symbols_64.size())
     {
@@ -1480,7 +1480,7 @@ using namespace std;
 
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(dylib_module, NSMaxRange(range))
+    MATCH_STRUCT(dylib_module, static_cast<uint32_t>(NSMaxRange(range)))
     modules.push_back(dylib_module);
     
     // accumulate search info
@@ -1592,7 +1592,7 @@ using namespace std;
 
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(dylib_module_64, NSMaxRange(range))
+    MATCH_STRUCT(dylib_module_64, static_cast<uint32_t>(NSMaxRange(range)))
     modules_64.push_back(dylib_module_64);
     
     // accumulate search info
@@ -1705,7 +1705,7 @@ using namespace std;
 
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(twolevel_hint, NSMaxRange(range))
+    MATCH_STRUCT(twolevel_hint, static_cast<uint32_t>(NSMaxRange(range)))
     
     [dataController read_uint32:range lastReadHex:&lastReadHex];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -1800,7 +1800,7 @@ using namespace std;
                              :lastReadHex
                              :@"uleb128"
                              :[NSString stringWithFormat:@"%@ %@",
-                               [self is64bit] == NO ? [self findSectionContainsRVA:address] : [self findSectionContainsRVA64:address],
+                               [self is64bit] == NO ? [self findSectionContainsRVA:static_cast<uint32_t>(address)] : [self findSectionContainsRVA64:address],
                                (symbolName = [self is64bit] == NO ? [self findSymbolAtRVA:(uint32_t)address] : [self findSymbolAtRVA64:address])]];
       
       [node.details setAttributes:MVMetaDataAttributeName,symbolName,nil]; 
@@ -1863,7 +1863,7 @@ using namespace std;
   
   while (NSMaxRange(range) < location + length)
   {
-    MATCH_STRUCT(data_in_code_entry, NSMaxRange(range))
+    MATCH_STRUCT(data_in_code_entry, static_cast<uint32_t>(NSMaxRange(range)))
     dices.push_back(data_in_code_entry);
     
     [dataController read_uint32:range lastReadHex:&lastReadHex];
@@ -1936,13 +1936,13 @@ using namespace std;
         // fill in lookup table with C Strings
         if ([self is64bit] == NO)
         {
-            uint32_t rva = [self fileOffsetToRVA:range.location];
+            uint32_t rva = [self fileOffsetToRVA:static_cast<uint32_t>(range.location)];
             [symbolNames setObject:[NSString stringWithFormat:@"0x%X:\"%@\"", rva, symbolName]
                             forKey:[NSNumber numberWithUnsignedLong:rva]];
         }
         else
         {
-            uint64_t rva64 = [self fileOffsetToRVA64:range.location];
+            uint64_t rva64 = [self fileOffsetToRVA64:static_cast<uint32_t>(range.location)];
             [symbolNames setObject:[NSString stringWithFormat:@"0x%qX:\"%@\"", rva64, symbolName]
                             forKey:[NSNumber numberWithUnsignedLongLong:rva64]];
         }

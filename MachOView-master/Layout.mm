@@ -37,8 +37,8 @@
   {
     dataController = dc;
     rootNode = node;
-    imageOffset = node.dataRange.location;
-    imageSize = node.dataRange.length;
+    imageOffset = static_cast<uint32_t>(node.dataRange.location);
+    imageSize = static_cast<uint32_t>(node.dataRange.length);
     backgroundThread = [[NSThread alloc] initWithTarget:self selector:@selector(doBackgroundTasks) object:nil];
     
     const char *tmp = [[MVDocument temporaryDirectory] UTF8String];
