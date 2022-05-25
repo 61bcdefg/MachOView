@@ -1,5 +1,6 @@
 .svn/*
 .idea
+.DS_Store
 build/*
 English.lproj/.svn/all-wcprops
 English.lproj/.svn/entries

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 /* Capstone Disassembly Engine */
-/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2014 */
+/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2015 */
 
 #ifdef CAPSTONE_HAS_POWERPC
 
@@ -18,6 +18,8 @@
 
 #include "../../cs_priv.h"
 #include "../../utils.h"
+
+#include "PPCDisassembler.h"
 
 #include "../../MCInst.h"
 #include "../../MCInstrDesc.h"
@@ -144,6 +146,17 @@ static const unsigned G8Regs[] = {
 	PPC_X28, PPC_X29, PPC_X30, PPC_X31
 };
 
+static const unsigned QFRegs[] = {
+	PPC_QF0, PPC_QF1, PPC_QF2, PPC_QF3,
+	PPC_QF4, PPC_QF5, PPC_QF6, PPC_QF7,
+	PPC_QF8, PPC_QF9, PPC_QF10, PPC_QF11,
+	PPC_QF12, PPC_QF13, PPC_QF14, PPC_QF15,
+	PPC_QF16, PPC_QF17, PPC_QF18, PPC_QF19,
+	PPC_QF20, PPC_QF21, PPC_QF22, PPC_QF23,
+	PPC_QF24, PPC_QF25, PPC_QF26, PPC_QF27,
+	PPC_QF28, PPC_QF29, PPC_QF30, PPC_QF31
+};
+
 static uint64_t getFeatureBits(int feature)
 {
 	// enable all features
@@ -151,9 +164,11 @@ static uint64_t getFeatureBits(int feature)
 }
 
 static DecodeStatus decodeRegisterClass(MCInst *Inst, uint64_t RegNo,
-		const unsigned *Regs)
+		const unsigned *Regs, size_t RegsLen)
 {
-	// assert(RegNo < N && "Invalid register number");
+	if (RegNo >= RegsLen / sizeof(unsigned)) {
+		return MCDisassembler_Fail;
+	}
 	MCOperand_CreateReg0(Inst, Regs[RegNo]);
 	return MCDisassembler_Success;
 }
@@ -162,74 +177,84 @@ static DecodeStatus DecodeCRRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, CRRegs);
+	return decodeRegisterClass(Inst, RegNo, CRRegs, sizeof(CRRegs));
 }
 
 static DecodeStatus DecodeCRBITRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, CRBITRegs);
+	return decodeRegisterClass(Inst, RegNo, CRBITRegs, sizeof(CRBITRegs));
 }
 
 static DecodeStatus DecodeF4RCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, FRegs);
+	return decodeRegisterClass(Inst, RegNo, FRegs, sizeof(FRegs));
 }
 
 static DecodeStatus DecodeF8RCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, FRegs);
+	return decodeRegisterClass(Inst, RegNo, FRegs, sizeof(FRegs));
 }
 
 static DecodeStatus DecodeVRRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, VRegs);
+	return decodeRegisterClass(Inst, RegNo, VRegs, sizeof(VRegs));
 }
 
 static DecodeStatus DecodeVSRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, VSRegs);
+	return decodeRegisterClass(Inst, RegNo, VSRegs, sizeof(VSRegs));
 }
 
 static DecodeStatus DecodeVSFRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, VSFRegs);
+	return decodeRegisterClass(Inst, RegNo, VSFRegs, sizeof(VSFRegs));
 }
 
 static DecodeStatus DecodeGPRCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, GPRegs);
+	return decodeRegisterClass(Inst, RegNo, GPRegs, sizeof(GPRegs));
 }
 
 static DecodeStatus DecodeGPRC_NOR0RegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, GP0Regs);
+	return decodeRegisterClass(Inst, RegNo, GP0Regs, sizeof(GP0Regs));
 }
 
 static DecodeStatus DecodeG8RCRegisterClass(MCInst *Inst, uint64_t RegNo,
 		uint64_t Address,
 		const void *Decoder)
 {
-	return decodeRegisterClass(Inst, RegNo, G8Regs);
+	return decodeRegisterClass(Inst, RegNo, G8Regs, sizeof(G8Regs));
 }
 
 #define DecodePointerLikeRegClass0 DecodeGPRCRegisterClass
 #define DecodePointerLikeRegClass1 DecodeGPRC_NOR0RegisterClass
+
+static DecodeStatus DecodeQFRCRegisterClass(MCInst *Inst, uint64_t RegNo,
+		uint64_t Address,
+		const void *Decoder)
+{
+	return decodeRegisterClass(Inst, RegNo, QFRegs, sizeof(QFRegs));
+}
+
+#define DecodeQSRCRegisterClass DecodeQFRCRegisterClass
+#define DecodeQBRCRegisterClass DecodeQFRCRegisterClass
 
 static DecodeStatus decodeUImmOperand(MCInst *Inst, uint64_t Imm,
 		int64_t Address, const void *Decoder, unsigned N)
@@ -261,6 +286,8 @@ static DecodeStatus decodeMemRIOperands(MCInst *Inst, uint64_t Imm,
 	uint64_t Disp = Imm & 0xFFFF;
 
 	// assert(Base < 32 && "Invalid base register");
+	if (Base >= 32)
+		return MCDisassembler_Fail;
 
 	switch (MCInst_getOpcode(Inst)) {
 		default: break;
@@ -316,6 +343,8 @@ static DecodeStatus decodeCRBitMOperand(MCInst *Inst, uint64_t Imm,
 
 	unsigned Zeros = CountTrailingZeros_64(Imm);
 	// assert(Zeros < 8 && "Invalid CR bit value");
+	if (Zeros >=8)
+		return MCDisassembler_Fail;
 
 	MCOperand_CreateReg0(Inst, CRRegs[7 - Zeros]);
 	return MCDisassembler_Success;
@@ -338,15 +367,25 @@ static DecodeStatus getInstruction(MCInst *MI,
 	}
 
 	// The instruction is big-endian encoded.
-	if (MI->csh->mode & CS_MODE_BIG_ENDIAN)
-		insn = (code[0] << 24) | (code[1] << 16) |
+	if (MODE_IS_BIG_ENDIAN(MI->csh->mode))
+		insn = ((uint32_t) code[0] << 24) | (code[1] << 16) |
 			(code[2] <<  8) | (code[3] <<  0);
 	else
-		insn = (code[3] << 24) | (code[2] << 16) |
+		insn = ((uint32_t) code[3] << 24) | (code[2] << 16) |
 			(code[1] <<  8) | (code[0] <<  0);
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
+		memset(MI->flat_insn->detail, 0, offsetof(cs_detail, ppc)+sizeof(cs_ppc));
+	}
+
+	if (MI->csh->mode & CS_MODE_QPX) {
+		result = decodeInstruction_4(DecoderTableQPX32, MI, insn, Address, 4);
+		if (result != MCDisassembler_Fail) {
+			*Size = 4;
+			return result;
+		}
+
+		MCInst_clear(MI);
 	}
 
 	result = decodeInstruction_4(DecoderTable32, MI, insn, Address, 4);
@@ -377,21 +416,24 @@ bool PPC_getInstruction(csh ud, const uint8_t *code, size_t code_len,
 void PPC_init(MCRegisterInfo *MRI)
 {
 	/*
-	InitMCRegisterInfo(PPCRegDesc, 279, RA, PC,
-			PPCMCRegisterClasses, 21,
-			PPCRegUnitRoots,
-			146,
-			PPCRegDiffLists,
-			PPCRegStrings,
-			PPCSubRegIdxLists,
-			8,
-			PPCSubRegIdxRanges,
-			PPCRegEncodingTable);
-	*/
+	   InitMCRegisterInfo(PPCRegDesc, 310, RA, PC,
+	   PPCMCRegisterClasses, 23,
+	   PPCRegUnitRoots,
+	   138,
+	   PPCRegDiffLists,
+	   PPCLaneMaskLists,
+	   PPCRegStrings,
+	   PPCRegClassStrings,
+	   PPCSubRegIdxLists,
+	   8,
+	   PPCSubRegIdxRanges,
+	   PPCRegEncodingTable);
+	 */
 
-	MCRegisterInfo_InitMCRegisterInfo(MRI, PPCRegDesc, 279,
+
+	MCRegisterInfo_InitMCRegisterInfo(MRI, PPCRegDesc, 310,
 			0, 0,
-			PPCMCRegisterClasses, 21,
+			PPCMCRegisterClasses, 23,
 			0, 0,
 			PPCRegDiffLists,
 			0,

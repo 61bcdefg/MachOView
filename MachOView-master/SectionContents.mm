@@ -16,7 +16,7 @@
 #import "CRTFootPrints.h"
 #import "ReadWrite.h"
 #import "DataController.h"
-#import "capstone.h"
+#import "capstone/capstone.h"
 
 #define TAB_WIDTH 10
 

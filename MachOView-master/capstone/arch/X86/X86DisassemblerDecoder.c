@@ -14,7 +14,7 @@
  *===----------------------------------------------------------------------===*/
 
 /* Capstone Disassembly Engine */
-/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2014 */
+/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2015 */
 
 #ifdef CAPSTONE_HAS_X86
 
@@ -349,11 +349,56 @@ CONSUME_FUNC(consumeUInt64, uint64_t)
  * @param location  - The location where the prefix is located (in the address
  *                    space of the instruction's reader).
  */
-static void setPrefixPresent(struct InternalInstruction *insn,
-		uint8_t prefix, uint64_t location)
+static void setPrefixPresent(struct InternalInstruction *insn, uint8_t prefix, uint64_t location)
 {
-	insn->prefixPresent[prefix] = 1;
-	insn->prefixLocations[prefix] = location;
+	switch (prefix) {
+	case 0x26:
+		insn->isPrefix26 = true;
+		insn->prefix26 = location;
+		break;
+	case 0x2e:
+		insn->isPrefix2e = true;
+		insn->prefix2e = location;
+		break;
+	case 0x36:
+		insn->isPrefix36 = true;
+		insn->prefix36 = location;
+		break;
+	case 0x3e:
+		insn->isPrefix3e = true;
+		insn->prefix3e = location;
+		break;
+	case 0x64:
+		insn->isPrefix64 = true;
+		insn->prefix64 = location;
+		break;
+	case 0x65:
+		insn->isPrefix65 = true;
+		insn->prefix65 = location;
+		break;
+	case 0x66:
+		insn->isPrefix66 = true;
+		insn->prefix66 = location;
+		break;
+	case 0x67:
+		insn->isPrefix67 = true;
+		insn->prefix67 = location;
+		break;
+	case 0xf0:
+		insn->isPrefixf0 = true;
+		insn->prefixf0 = location;
+		break;
+	case 0xf2:
+		insn->isPrefixf2 = true;
+		insn->prefixf2 = location;
+		break;
+	case 0xf3:
+		insn->isPrefixf3 = true;
+		insn->prefixf3 = location;
+		break;
+	default:
+		break;
+	}
 }
 
 /*
@@ -365,14 +410,58 @@ static void setPrefixPresent(struct InternalInstruction *insn,
  * @param location  - The location to query.
  * @return          - Whether the prefix is at that location.
  */
-static bool isPrefixAtLocation(struct InternalInstruction *insn, uint8_t prefix)
+static bool isPrefixAtLocation(struct InternalInstruction *insn, uint8_t prefix,
+		uint64_t location)
 {
-	//if (insn->prefixPresent[prefix] == 1 &&
-//			insn->prefixLocations[prefix] == location)
-	if (insn->prefixPresent[prefix] == 1)
-		return true;
-	else
-		return false;
+	switch (prefix) {
+	case 0x26:
+		if (insn->isPrefix26 && insn->prefix26 == location)
+			return true;
+		break;
+	case 0x2e:
+		if (insn->isPrefix2e && insn->prefix2e == location)
+			return true;
+		break;
+	case 0x36:
+		if (insn->isPrefix36 && insn->prefix36 == location)
+			return true;
+		break;
+	case 0x3e:
+		if (insn->isPrefix3e && insn->prefix3e == location)
+			return true;
+		break;
+	case 0x64:
+		if (insn->isPrefix64 && insn->prefix64 == location)
+			return true;
+		break;
+	case 0x65:
+		if (insn->isPrefix65 && insn->prefix65 == location)
+			return true;
+		break;
+	case 0x66:
+		if (insn->isPrefix66 && insn->prefix66 == location)
+			return true;
+		break;
+	case 0x67:
+		if (insn->isPrefix67 && insn->prefix67 == location)
+			return true;
+		break;
+	case 0xf0:
+		if (insn->isPrefixf0 && insn->prefixf0 == location)
+			return true;
+		break;
+	case 0xf2:
+		if (insn->isPrefixf2 && insn->prefixf2 == location)
+			return true;
+		break;
+	case 0xf3:
+		if (insn->isPrefixf3 && insn->prefixf3 == location)
+			return true;
+		break;
+	default:
+		break;
+	}
+	return false;
 }
 
 /*
@@ -393,6 +482,8 @@ static int readPrefixes(struct InternalInstruction *insn)
 	bool hasAdSize = false;
 	bool hasOpSize = false;
 
+	//initialize to an impossible value
+	insn->necessaryPrefixLocation = insn->readerCursor - 1;
 	while (isPrefix) {
 		if (insn->mode == MODE_64BIT) {
 			// eliminate consecutive redundant REX bytes in front
@@ -438,7 +529,7 @@ static int readPrefixes(struct InternalInstruction *insn)
 
 		/* If we fail reading prefixes, just stop here and let the opcode reader deal with it */
 		if (consumeByte(insn, &byte))
-			break;
+			return -1;
 
 		if (insn->readerCursor - 1 == insn->startLocation
 				&& (byte == 0xf2 || byte == 0xf3)) {
@@ -453,9 +544,8 @@ static int readPrefixes(struct InternalInstruction *insn)
 			 * - it is followed by an xchg instruction
 			 * then it should be disassembled as a xacquire/xrelease not repne/rep.
 			 */
-			if ((byte == 0xf2 || byte == 0xf3) &&
-					((nextByte == 0xf0) |
-					 ((nextByte & 0xfe) == 0x86 || (nextByte & 0xf8) == 0x90)))
+			if (((nextByte == 0xf0) ||
+				((nextByte & 0xfe) == 0x86 || (nextByte & 0xf8) == 0x90)))
 				insn->xAcquireRelease = true;
 			/*
 			 * Also if the byte is 0xf3, and the following condition is met:
@@ -482,21 +572,21 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0xf3:  /* REP or REPE/REPZ */
 			case 0xf0:  /* LOCK */
 				// only accept the last prefix
-				insn->prefixPresent[0xf2] = 0;
-				insn->prefixPresent[0xf3] = 0;
-				insn->prefixPresent[0xf0] = 0;
+				insn->isPrefixf2 = false;
+				insn->isPrefixf3 = false;
+				insn->isPrefixf0 = false;
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix0 = byte;
 				break;
 			case 0x2e:  /* CS segment override -OR- Branch not taken */
 				insn->segmentOverride = SEG_OVERRIDE_CS;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -504,12 +594,12 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0x36:  /* SS segment override -OR- Branch taken */
 				insn->segmentOverride = SEG_OVERRIDE_SS;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -517,12 +607,12 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0x3e:  /* DS segment override */
 				insn->segmentOverride = SEG_OVERRIDE_DS;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -530,12 +620,12 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0x26:  /* ES segment override */
 				insn->segmentOverride = SEG_OVERRIDE_ES;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -543,12 +633,12 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0x64:  /* FS segment override */
 				insn->segmentOverride = SEG_OVERRIDE_FS;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -556,12 +646,12 @@ static int readPrefixes(struct InternalInstruction *insn)
 			case 0x65:  /* GS segment override */
 				insn->segmentOverride = SEG_OVERRIDE_GS;
 				// only accept the last prefix
-				insn->prefixPresent[0x2e] = 0;
-				insn->prefixPresent[0x36] = 0;
-				insn->prefixPresent[0x3e] = 0;
-				insn->prefixPresent[0x26] = 0;
-				insn->prefixPresent[0x64] = 0;
-				insn->prefixPresent[0x65] = 0;
+				insn->isPrefix2e = false;
+				insn->isPrefix36 = false;
+				insn->isPrefix3e = false;
+				insn->isPrefix26 = false;
+				insn->isPrefix64 = false;
+				insn->isPrefix65 = false;
 
 				setPrefixPresent(insn, byte, prefixLocation);
 				insn->prefix1 = byte;
@@ -608,6 +698,7 @@ static int readPrefixes(struct InternalInstruction *insn)
 			} else {
 				unconsumeByte(insn); /* unconsume byte1 */
 				unconsumeByte(insn); /* unconsume byte  */
+				insn->necessaryPrefixLocation = insn->readerCursor - 2;
 			}
 
 			if (insn->vectorExtensionType == TYPE_EVEX) {
@@ -632,7 +723,13 @@ static int readPrefixes(struct InternalInstruction *insn)
 						| (xFromEVEX2of4(insn->vectorExtensionPrefix[1]) << 1)
 						| (bFromEVEX2of4(insn->vectorExtensionPrefix[1]) << 0);
 				}
-
+				switch (ppFromEVEX3of4(insn->vectorExtensionPrefix[2])) {
+					default:
+						break;
+					case VEX_PREFIX_66:
+						hasOpSize = true;
+						break;
+				}
 				//dbgprintf(insn, "Found EVEX prefix 0x%hhx 0x%hhx 0x%hhx 0x%hhx",
 				//		insn->vectorExtensionPrefix[0], insn->vectorExtensionPrefix[1],
 				//		insn->vectorExtensionPrefix[2], insn->vectorExtensionPrefix[3]);
@@ -652,8 +749,10 @@ static int readPrefixes(struct InternalInstruction *insn)
 
 		if (insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) {
 			insn->vectorExtensionType = TYPE_VEX_3B;
+			insn->necessaryPrefixLocation = insn->readerCursor - 1;
 		} else {
 			unconsumeByte(insn);
+			insn->necessaryPrefixLocation = insn->readerCursor - 1;
 		}
 
 		if (insn->vectorExtensionType == TYPE_VEX_3B) {
@@ -671,6 +770,13 @@ static int readPrefixes(struct InternalInstruction *insn)
 					| (xFromVEX2of3(insn->vectorExtensionPrefix[1]) << 1)
 					| (bFromVEX2of3(insn->vectorExtensionPrefix[1]) << 0);
 
+			}
+			switch (ppFromVEX3of3(insn->vectorExtensionPrefix[2])) {
+				default:
+					break;
+				case VEX_PREFIX_66:
+					hasOpSize = true;
+					break;
 			}
 		}
 	} else if (byte == 0xc5) {
@@ -715,9 +821,10 @@ static int readPrefixes(struct InternalInstruction *insn)
 
 		if ((byte1 & 0x38) != 0x0) { /* 0 in these 3 bits is a POP instruction. */
 			insn->vectorExtensionType = TYPE_XOP;
-		}
-		else {
+			insn->necessaryPrefixLocation = insn->readerCursor - 1;
+		} else {
 			unconsumeByte(insn);
+			insn->necessaryPrefixLocation = insn->readerCursor - 1;
 		}
 
 		if (insn->vectorExtensionType == TYPE_XOP) {
@@ -761,12 +868,15 @@ static int readPrefixes(struct InternalInstruction *insn)
 				}
 
 				insn->rexPrefix = byte;
+				insn->necessaryPrefixLocation = insn->readerCursor - 2;
 				// dbgprintf(insn, "Found REX prefix 0x%hhx", byte);
 			} else {
 				unconsumeByte(insn);
+				insn->necessaryPrefixLocation = insn->readerCursor - 1;
 			}
 		} else {
 			unconsumeByte(insn);
+			insn->necessaryPrefixLocation = insn->readerCursor - 1;
 		}
 	}
 
@@ -824,6 +934,7 @@ static int readOpcode(struct InternalInstruction *insn)
 	// printf(">>> readOpcode() = %x\n", insn->readerCursor);
 
 	insn->opcodeType = ONEBYTE;
+	insn->firstByte = 0x00;
 
 	if (insn->vectorExtensionType == TYPE_EVEX) {
 		switch (mmFromEVEX2of4(insn->vectorExtensionPrefix[1])) {
@@ -998,7 +1109,7 @@ static int getIDWithAttrMask(uint16_t *instructionID,
 
 	hasModRMExtension = modRMRequired(insn->opcodeType,
 			instructionClass,
-			insn->opcode);
+			insn->opcode) != 0;
 
 	if (hasModRMExtension) {
 		if (readModRM(insn))
@@ -1041,6 +1152,16 @@ static bool is16BitEquivalent(unsigned orig, unsigned equiv)
 }
 
 /*
+ * is64Bit - Determines whether this instruction is a 64-bit instruction.
+ *
+ * @param name - The instruction that is not 16-bit
+ */
+static bool is64Bit(uint16_t id)
+{
+	return is_64bit_insn[id];
+}
+
+/*
  * getID - Determines the ID of an instruction, consuming the ModR/M byte as
  *   appropriate for extended and escape opcodes.  Determines the attributes and
  *   context for the instruction before doing so.
@@ -1053,7 +1174,6 @@ static int getID(struct InternalInstruction *insn)
 {
 	uint16_t attrMask;
 	uint16_t instructionID;
-	const struct InstructionSpecifier *spec;
 
 	// printf(">>> getID()\n");
 	attrMask = ATTR_NONE;
@@ -1136,15 +1256,13 @@ static int getID(struct InternalInstruction *insn)
 			return -1;
 		}
 	} else {
-		if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0x66)) {
-			if (insn->twoByteEscape != 0x0f)
-				attrMask |= ATTR_OPSIZE;
-		} else if (isPrefixAtLocation(insn, 0x67))
+		if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation)) {
+			attrMask |= ATTR_OPSIZE;
+		} else if (isPrefixAtLocation(insn, 0x67, insn->necessaryPrefixLocation)) {
 			attrMask |= ATTR_ADSIZE;
-
-		if (isPrefixAtLocation(insn, 0xf3)) {
+		} else if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0xf3, insn->necessaryPrefixLocation)) {
 			attrMask |= ATTR_XS;
-		} else if (isPrefixAtLocation(insn, 0xf2)) {
+		} else if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0xf2, insn->necessaryPrefixLocation)) {
 			attrMask |= ATTR_XD;
 		}
 	}
@@ -1152,29 +1270,77 @@ static int getID(struct InternalInstruction *insn)
 	if (insn->rexPrefix & 0x08)
 		attrMask |= ATTR_REXW;
 
-	if (getIDWithAttrMask(&instructionID, insn, attrMask))
-		return -1;
-
 	/*
 	 * JCXZ/JECXZ need special handling for 16-bit mode because the meaning
 	 * of the AdSize prefix is inverted w.r.t. 32-bit mode.
 	 */
-	if (insn->mode == MODE_16BIT && insn->opcode == 0xE3) {
-		spec = specifierForUID(instructionID);
+	if (insn->mode == MODE_16BIT && insn->opcodeType == ONEBYTE &&
+			insn->opcode == 0xE3)
+		attrMask ^= ATTR_ADSIZE;
 
+	if (getIDWithAttrMask(&instructionID, insn, attrMask))
+		return -1;
+
+	/* The following clauses compensate for limitations of the tables. */
+	if (insn->mode != MODE_64BIT &&
+			insn->vectorExtensionType != TYPE_NO_VEX_XOP) {
 		/*
-		 * Check for Ii8PCRel instructions. We could alternatively do a
-		 * string-compare on the names, but this is probably cheaper.
+		 * The tables can't distinquish between cases where the W-bit is used to
+		 * select register size and cases where its a required part of the opcode.
 		 */
-		if (x86OperandSets[spec->operands][0].type == TYPE_REL8) {
-			attrMask ^= ATTR_ADSIZE;
-			if (getIDWithAttrMask(&instructionID, insn, attrMask))
-				return -1;
+		if ((insn->vectorExtensionType == TYPE_EVEX &&
+					wFromEVEX3of4(insn->vectorExtensionPrefix[2])) ||
+				(insn->vectorExtensionType == TYPE_VEX_3B &&
+				 wFromVEX3of3(insn->vectorExtensionPrefix[2])) ||
+				(insn->vectorExtensionType == TYPE_XOP &&
+				 wFromXOP3of3(insn->vectorExtensionPrefix[2]))) {
+			uint16_t instructionIDWithREXW;
+			if (getIDWithAttrMask(&instructionIDWithREXW,
+						insn, attrMask | ATTR_REXW)) {
+				insn->instructionID = instructionID;
+				insn->spec = specifierForUID(instructionID);
+
+				return 0;
+			}
+
+			// If not a 64-bit instruction. Switch the opcode.
+			if (!is64Bit(instructionIDWithREXW)) {
+				insn->instructionID = instructionIDWithREXW;
+				insn->spec = specifierForUID(instructionIDWithREXW);
+
+				return 0;
+			}
 		}
 	}
 
-	/* The following clauses compensate for limitations of the tables. */
-	if ((insn->mode == MODE_16BIT || insn->prefixPresent[0x66]) &&
+	/*
+	 * Absolute moves need special handling.
+	 * -For 16-bit mode because the meaning of the AdSize and OpSize prefixes are
+	 *  inverted w.r.t.
+	 * -For 32-bit mode we need to ensure the ADSIZE prefix is observed in
+	 *  any position.
+	 */
+	if (insn->opcodeType == ONEBYTE && ((insn->opcode & 0xFC) == 0xA0)) {
+		/* Make sure we observed the prefixes in any position. */
+		if (insn->isPrefix67)
+			attrMask |= ATTR_ADSIZE;
+		if (insn->isPrefix66)
+			attrMask |= ATTR_OPSIZE;
+
+		/* In 16-bit, invert the attributes. */
+		if (insn->mode == MODE_16BIT)
+			attrMask ^= ATTR_ADSIZE | ATTR_OPSIZE;
+
+		if (getIDWithAttrMask(&instructionID, insn, attrMask))
+			return -1;
+
+		insn->instructionID = instructionID;
+		insn->spec = specifierForUID(instructionID);
+
+		return 0;
+	}
+
+	if ((insn->mode == MODE_16BIT || insn->isPrefix66) &&
 			!(attrMask & ATTR_OPSIZE)) {
 		/*
 		 * The instruction tables make no distinction between instructions that
@@ -1202,7 +1368,7 @@ static int getID(struct InternalInstruction *insn)
 		}
 
 		if (is16BitEquivalent(instructionID, instructionIDWithOpsize) &&
-				(insn->mode == MODE_16BIT) ^ insn->prefixPresent[0x66]) {
+				(insn->mode == MODE_16BIT) ^ insn->isPrefix66) {
 			insn->instructionID = instructionIDWithOpsize;
 			insn->spec = specifierForUID(instructionIDWithOpsize);
 		} else {
@@ -1396,7 +1562,6 @@ static int readDisplacement(struct InternalInstruction *insn)
 			break;
 	}
 
-	insn->consumedDisplacement = true;
 	return 0;
 }
 
@@ -1416,6 +1581,8 @@ static int readModRM(struct InternalInstruction *insn)
 	// already got ModRM byte?
 	if (insn->consumedModRM)
 		return 0;
+
+	insn->modRMOffset = (uint8_t)(insn->readerCursor - insn->startLocation);
 
 	if (consumeByte(insn, &insn->modRM))
 		return -1;
@@ -1495,6 +1662,7 @@ static int readModRM(struct InternalInstruction *insn)
 					break;
 				case 0x3:
 					insn->eaBase = (EABase)(insn->eaRegBase + rm);
+					insn->eaDisplacement = EA_DISP_NONE;
 					if (readDisplacement(insn))
 						return -1;
 					break;
@@ -1561,102 +1729,58 @@ static int readModRM(struct InternalInstruction *insn)
 }
 
 #define GENERIC_FIXUP_FUNC(name, base, prefix)            \
-	static uint8_t name(struct InternalInstruction *insn,   \
-			OperandType type,                   \
-			uint8_t index,                      \
-			uint8_t *valid) {                   \
-		*valid = 1;                                           \
-		switch (type) {                                       \
-			case TYPE_R8:       \
-			    insn->operandSize = 1; \
-				break; \
-			case TYPE_R16:      \
-			    insn->operandSize = 2; \
-				break; \
-			case TYPE_R32:      \
-			    insn->operandSize = 4; \
-				break; \
-			case TYPE_R64:      \
-			    insn->operandSize = 8; \
-				break; \
-			case TYPE_XMM512:   \
-			    insn->operandSize = 64; \
-				break; \
-			case TYPE_XMM256:   \
-			    insn->operandSize = 32; \
-				break; \
-			case TYPE_XMM128:   \
-			    insn->operandSize = 16; \
-				break; \
-			case TYPE_XMM64:    \
-			    insn->operandSize = 8; \
-				break; \
-			case TYPE_XMM32:    \
-			    insn->operandSize = 4; \
-				break; \
-			case TYPE_XMM:      \
-			    insn->operandSize = 2; \
-				break; \
-			case TYPE_MM64:     \
-			    insn->operandSize = 8; \
-				break; \
-			case TYPE_MM32:     \
-			    insn->operandSize = 4; \
-				break; \
-			case TYPE_MM:       \
-			    insn->operandSize = 2; \
-				break; \
-			case TYPE_CONTROLREG: \
-			    insn->operandSize = 4; \
-				break; \
-			default: break; \
-		} \
-		switch (type) {                                           \
-			default:                                              \
-				*valid = 0;                                           \
-				return 0;                                             \
-			case TYPE_Rv:                                         \
-				return (uint8_t)(base + index);                   \
-			case TYPE_R8:                                         \
-				if (insn->rexPrefix &&                            \
-					index >= 4 && index <= 7) { \
-					return prefix##_SPL + (index - 4);        \
-				} else {                                      \
-					return prefix##_AL + index;               \
-				}                                             \
-			case TYPE_R16:                                        \
-				return prefix##_AX + index;                       \
-			case TYPE_R32:                                        \
-				return prefix##_EAX + index;                      \
-			case TYPE_R64:                                        \
-				return prefix##_RAX + index;                      \
-			case TYPE_XMM512:                                     \
-				return prefix##_ZMM0 + index;                     \
-			case TYPE_XMM256:                                     \
-				return prefix##_YMM0 + index;                     \
-			case TYPE_XMM128:                                     \
-			case TYPE_XMM64:                                      \
-			case TYPE_XMM32:                                      \
-			case TYPE_XMM:                                        \
-				return prefix##_XMM0 + index;                     \
-			case TYPE_VK1:                                        \
-			case TYPE_VK8:                                        \
-			case TYPE_VK16:                                       \
-				return prefix##_K0 + index;                       \
-			case TYPE_MM64:                                       \
-			case TYPE_MM32:                                       \
-			case TYPE_MM:                                         \
-				return prefix##_MM0 + (index & 7);                \
-			case TYPE_SEGMENTREG:                                 \
-				return prefix##_ES + (index & 7);                 \
-			case TYPE_DEBUGREG:                                   \
-				if (index > 7)                                    \
-					*valid = 0;                                   \
-				return prefix##_DR0 + index;                      \
-			case TYPE_CONTROLREG:                                 \
-				return prefix##_CR0 + index;                      \
-		}                                                     \
-	}
+  static uint8_t name(struct InternalInstruction *insn,   \
+                      OperandType type,                   \
+                      uint8_t index,                      \
+                      uint8_t *valid) {                   \
+    *valid = 1;                                           \
+    switch (type) {                                       \
+    default:                                              \
+      *valid = 0;                                         \
+      return 0;                                           \
+    case TYPE_Rv:                                         \
+      return base + index;                                \
+    case TYPE_R8:                                         \
+      if (insn->rexPrefix &&                              \
+         index >= 4 && index <= 7) {                      \
+        return prefix##_SPL + (index - 4);                \
+      } else {                                            \
+        return prefix##_AL + index;                       \
+      }                                                   \
+    case TYPE_R16:                                        \
+      return prefix##_AX + index;                         \
+    case TYPE_R32:                                        \
+      return prefix##_EAX + index;                        \
+    case TYPE_R64:                                        \
+      return prefix##_RAX + index;                        \
+    case TYPE_XMM512:                                     \
+      return prefix##_ZMM0 + index;                       \
+    case TYPE_XMM256:                                     \
+      return prefix##_YMM0 + index;                       \
+    case TYPE_XMM128:                                     \
+    case TYPE_XMM64:                                      \
+    case TYPE_XMM32:                                      \
+    case TYPE_XMM:                                        \
+      return prefix##_XMM0 + index;                       \
+    case TYPE_VK1:                                        \
+    case TYPE_VK8:                                        \
+    case TYPE_VK16:                                       \
+      if (index > 7)                                      \
+        *valid = 0;                                       \
+      return prefix##_K0 + index;                         \
+    case TYPE_MM64:                                       \
+      return prefix##_MM0 + (index & 0x7);                \
+    case TYPE_SEGMENTREG:                                 \
+      if (index > 5)                                      \
+        *valid = 0;                                       \
+      return prefix##_ES + index;                         \
+    case TYPE_DEBUGREG:                                   \
+      return prefix##_DR0 + index;                        \
+    case TYPE_CONTROLREG:                                 \
+      return prefix##_CR0 + index;                        \
+    }                                                     \
+  }
+
 
 /*
  * fixup*Value - Consults an operand type to determine the meaning of the
@@ -1884,7 +2008,7 @@ static int readMaskRegister(struct InternalInstruction *insn)
 
 	return 0;
 }
-	 
+
 /*
  * readOperands - Consults the specifier for an instruction and consumes all
  *   operands for that instruction, interpreting them as it goes.
@@ -1898,7 +2022,7 @@ static int readOperands(struct InternalInstruction *insn)
 	int hasVVVV, needVVVV;
 	int sawRegImm = 0;
 
-	// printf(">>> readOperands()\n");
+	// printf(">>> readOperands(): ID = %u\n", insn->instructionID);
 	/* If non-zero vvvv specified, need to make sure one of the operands
 	   uses it. */
 	hasVVVV = !readVVVV(insn);
@@ -1919,7 +2043,7 @@ static int readOperands(struct InternalInstruction *insn)
 					return -1;
 				// Apply the AVX512 compressed displacement scaling factor.
 				if (x86OperandSets[insn->spec->operands][index].encoding != ENCODING_REG && insn->eaDisplacement == EA_DISP_8)
-					insn->displacement *= 1 << (x86OperandSets[insn->spec->operands][index].encoding - ENCODING_RM);
+					insn->displacement *= (int64_t)1 << (x86OperandSets[insn->spec->operands][index].encoding - ENCODING_RM);
 				break;
 			case ENCODING_CB:
 			case ENCODING_CW:
@@ -1963,6 +2087,15 @@ static int readOperands(struct InternalInstruction *insn)
 			case ENCODING_Ia:
 				if (readImmediate(insn, insn->addressSize))
 					return -1;
+				/* Direct memory-offset (moffset) immediate will get mapped
+				   to memory operand later. We want the encoding info to
+				   reflect that as well. */
+				insn->displacementOffset = insn->immediateOffset;
+				insn->consumedDisplacement = true;
+				insn->displacementSize = insn->immediateSize;
+				insn->displacement = insn->immediates[insn->numImmediatesConsumed - 1];
+				insn->immediateOffset = 0;
+				insn->immediateSize = 0;
 				break;
 			case ENCODING_RB:
 				if (readOpcodeRegister(insn, 1))
@@ -2012,21 +2145,22 @@ static int readOperands(struct InternalInstruction *insn)
 }
 
 // return True if instruction is illegal to use with prefixes
-// This also check & fix the prefixPresent[] when a prefix is irrelevant.
+// This also check & fix the isPrefixNN when a prefix is irrelevant.
 static bool checkPrefix(struct InternalInstruction *insn)
 {
 	// LOCK prefix
-	if (insn->prefixPresent[0xf0]) {
+	if (insn->isPrefixf0) {
 		switch(insn->instructionID) {
 			default:
 				// invalid LOCK
 				return true;
 
+			// nop dword [rax]
+			case X86_NOOPL:
+
 			// DEC
 			case X86_DEC16m:
 			case X86_DEC32m:
-			case X86_DEC64_16m:
-			case X86_DEC64_32m:
 			case X86_DEC64m:
 			case X86_DEC8m:
 
@@ -2041,6 +2175,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_ADC64mi8:
 			case X86_ADC64mr:
 			case X86_ADC8mi:
+			case X86_ADC8mi8:
 			case X86_ADC8mr:
 
 			// ADD
@@ -2054,6 +2189,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_ADD64mi8:
 			case X86_ADD64mr:
 			case X86_ADD8mi:
+			case X86_ADD8mi8:
 			case X86_ADD8mr:
 
 			// AND
@@ -2067,6 +2203,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_AND64mi8:
 			case X86_AND64mr:
 			case X86_AND8mi:
+			case X86_AND8mi8:
 			case X86_AND8mr:
 
 			// BTC
@@ -2094,6 +2231,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_BTS64mr:
 
 			// CMPXCHG
+			case X86_CMPXCHG16B:
 			case X86_CMPXCHG16rm:
 			case X86_CMPXCHG32rm:
 			case X86_CMPXCHG64rm:
@@ -2103,8 +2241,6 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			// INC
 			case X86_INC16m:
 			case X86_INC32m:
-			case X86_INC64_16m:
-			case X86_INC64_32m:
 			case X86_INC64m:
 			case X86_INC8m:
 
@@ -2131,6 +2267,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_OR64mi32:
 			case X86_OR64mi8:
 			case X86_OR64mr:
+			case X86_OR8mi8:
 			case X86_OR8mi:
 			case X86_OR8mr:
 
@@ -2145,6 +2282,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_SBB64mi8:
 			case X86_SBB64mr:
 			case X86_SBB8mi:
+			case X86_SBB8mi8:
 			case X86_SBB8mr:
 
 			// SUB
@@ -2157,6 +2295,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_SUB64mi32:
 			case X86_SUB64mi8:
 			case X86_SUB64mr:
+			case X86_SUB8mi8:
 			case X86_SUB8mi:
 			case X86_SUB8mr:
 
@@ -2182,6 +2321,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 			case X86_XOR64mi32:
 			case X86_XOR64mi8:
 			case X86_XOR64mr:
+			case X86_XOR8mi8:
 			case X86_XOR8mi:
 			case X86_XOR8mr:
 
@@ -2191,7 +2331,7 @@ static bool checkPrefix(struct InternalInstruction *insn)
 	}
 
 	// REPNE prefix
-	if (insn->prefixPresent[0xf2]) {
+	if (insn->isPrefixf2) {
 		// 0xf2 can be a part of instruction encoding, but not really a prefix.
 		// In such a case, clear it.
 		if (insn->twoByteEscape == 0x0f) {
@@ -2275,3 +2415,4 @@ int decodeInstruction(struct InternalInstruction *insn,
 }
 
 #endif
+

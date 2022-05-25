@@ -1,12 +1,10 @@
 /* Capstone Disassembly Engine */
-/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2014 */
+/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2015 */
 
 #ifndef CS_PPCDISASSEMBLER_H
 #define CS_PPCDISASSEMBLER_H
 
-#include <stdint.h>
-
-#include "../../include/capstone.h"
+#include "capstone/capstone.h"
 #include "../../MCRegisterInfo.h"
 #include "../../MCInst.h"
 

@@ -15,7 +15,7 @@
 #define CS_AARCH64_ADDRESSINGMODES_H
 
 /* Capstone Disassembly Engine */
-/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2014 */
+/* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2015 */
 
 #include "../../MathExtras.h"
 
@@ -198,7 +198,7 @@ static inline float AArch64_AM_getFPImmFloat(unsigned Imm)
 	// where B = NOT(b);
 
 	FPUnion.I = 0;
-	FPUnion.I |= Sign << 31;
+	FPUnion.I |= ((uint32_t)Sign) << 31;
 	FPUnion.I |= ((Exp & 0x4) != 0 ? 0 : 1) << 30;
 	FPUnion.I |= ((Exp & 0x4) != 0 ? 0x1f : 0) << 25;
 	FPUnion.I |= (Exp & 0x3) << 23;
@@ -213,16 +213,13 @@ static inline float AArch64_AM_getFPImmFloat(unsigned Imm)
 
 static inline uint64_t AArch64_AM_decodeAdvSIMDModImmType10(uint8_t Imm)
 {
-	uint64_t EncVal = 0;
-	if (Imm & 0x80) EncVal |= 0xff00000000000000ULL;
-	if (Imm & 0x40) EncVal |= 0x00ff000000000000ULL;
-	if (Imm & 0x20) EncVal |= 0x0000ff0000000000ULL;
-	if (Imm & 0x10) EncVal |= 0x000000ff00000000ULL;
-	if (Imm & 0x08) EncVal |= 0x00000000ff000000ULL;
-	if (Imm & 0x04) EncVal |= 0x0000000000ff0000ULL;
-	if (Imm & 0x02) EncVal |= 0x000000000000ff00ULL;
-	if (Imm & 0x01) EncVal |= 0x00000000000000ffULL;
-	return EncVal;
+	static const uint32_t lookup[16] = {
+		0x00000000, 0x000000ff, 0x0000ff00, 0x0000ffff, 
+		0x00ff0000, 0x00ff00ff, 0x00ffff00, 0x00ffffff, 
+		0xff000000, 0xff0000ff, 0xff00ff00, 0xff00ffff, 
+		0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff
+        };
+	return lookup[Imm & 0x0f] | ((uint64_t)lookup[Imm >> 4] << 32);
 }
 
 #endif
