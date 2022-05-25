@@ -1,4 +1,5 @@
 .svn/*
+.idea
 build/*
 English.lproj/.svn/all-wcprops
 English.lproj/.svn/entries

@@ -1,6 +1,6 @@
 # MachOView 
 
-添加原生M1芯片Mac支持
+添加解析arm64e header和原生M1芯片Mac支持
 
 该工程是建立在[轮子](https://github.com/gdbinit/MachOView)上的，感谢作者的贡献，遗憾的源工程无法直接编译，这边自己维护了下。
 

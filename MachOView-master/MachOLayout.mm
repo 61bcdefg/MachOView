@@ -2267,7 +2267,8 @@ struct CompareSectionByName
                          :@"CPU SubType"
                          :@""];
 
-  if ((mach_header_64->cpusubtype & CPU_SUBTYPE_LIB64) == CPU_SUBTYPE_LIB64) [node.details appendRow:@"":@"":@"80000000":@"CPU_SUBTYPE_LIB64"];
+  if (mach_header_64->cpusubtype & CPU_SUBTYPE_LIB64 == CPU_SUBTYPE_LIB64
+          && !mach_header_64->cpusubtype == 0x80000002) [node.details appendRow:@"":@"":@"80000000":@"CPU_SUBTYPE_LIB64"];
 
   if (mach_header_64->cputype == CPU_TYPE_X86_64)
   {
@@ -2277,6 +2278,7 @@ struct CompareSectionByName
   {
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_ALL)  [node.details appendRow:@"":@"":@"00000000":@"CPU_SUBTYPE_ARM64_ALL"];
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_V8)   [node.details appendRow:@"":@"":@"00000001":@"CPU_SUBTYPE_ARM64_V8"];
+    if (mach_header_64->cpusubtype == 0x80000002)  [node.details appendRow:@"":@"":@"80000002":@"CPU_SUBTYPE_ARM64E"];
   }
 
   
