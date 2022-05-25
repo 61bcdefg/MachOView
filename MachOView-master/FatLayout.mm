@@ -126,7 +126,9 @@ using namespace std;
                              (fat_arch.cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM_V8 ? @"CPU_SUBTYPE_ARM_V8" : @"???") :
                             fat_arch.cputype == CPU_TYPE_ARM64 ?
                             ((fat_arch.cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_ALL ? @"CPU_SUBTYPE_ARM64_ALL" :
-                             (fat_arch.cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_V8 ? @"CPU_SUBTYPE_ARM64_V8" : @"???") :
+                             (fat_arch.cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_V8 ? @"CPU_SUBTYPE_ARM64_V8" :
+                             (fat_arch.cpusubtype == ((cpu_subtype_t) 0x00000002)) ? @"CPU_SUBTYPE_ARM64E_V1" :
+                             (fat_arch.cpusubtype == ((cpu_subtype_t) 0x80000002)) ? @"CPU_SUBTYPE_ARM64E_V2" : @"???") :
                             fat_arch.cputype == CPU_TYPE_I386 ?
                             ((fat_arch.cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_I386_ALL ? @"CPU_SUBTYPE_I386_ALL" : @"???") :
                             fat_arch.cputype == CPU_TYPE_X86_64 ?

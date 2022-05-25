@@ -2278,7 +2278,10 @@ struct CompareSectionByName
   {
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_ALL)  [node.details appendRow:@"":@"":@"00000000":@"CPU_SUBTYPE_ARM64_ALL"];
     if ((mach_header_64->cpusubtype & ~CPU_SUBTYPE_MASK) == CPU_SUBTYPE_ARM64_V8)   [node.details appendRow:@"":@"":@"00000001":@"CPU_SUBTYPE_ARM64_V8"];
-    if (mach_header_64->cpusubtype == ((cpu_subtype_t) 0x80000002))  [node.details appendRow:@"":@"":@"80000002":@"CPU_SUBTYPE_ARM64E"];
+      if (mach_header_64->cpusubtype == ((cpu_subtype_t) 0x00000002))
+        [node.details appendRow:@"":@"":@"00000002":@"CPU_SUBTYPE_ARM64E_V1"];
+    if (mach_header_64->cpusubtype == ((cpu_subtype_t) 0x80000002))
+        [node.details appendRow:@"":@"":@"80000002":@"CPU_SUBTYPE_ARM64E_V2"];
   }
 
   
