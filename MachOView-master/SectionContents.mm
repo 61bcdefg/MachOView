@@ -646,12 +646,13 @@ static AsmFootPrint const fastStubHelperHelperARM =
         NSRange range = NSMakeRange(fileOffset,0);
         NSString * lastReadHex;
         [dataController read_bytes:range length:cs_insn[i].size lastReadHex:&lastReadHex];
-        /* format the disassembly output using Capstone strings */
-        NSString *asm_string = [NSString stringWithFormat:@"%-10s\t%s", cs_insn[i].mnemonic, cs_insn[i].op_str];
+        /* format the disassembly output using Capstone strings */;
+        NSString *asm_mnemonic = [NSString stringWithFormat:@"%-10s", cs_insn[i].mnemonic];
+        NSString *asm_opstr = [NSString stringWithFormat:@"%s", cs_insn[i].op_str];
         [node.details appendRow:[NSString stringWithFormat:@"%.8X", fileOffset]
                                :lastReadHex
-                               :asm_string
-                               :@""];
+                               :asm_mnemonic
+                               :asm_opstr];
         /* advance to next instruction */
         fileOffset += cs_insn[i].size;
     }
