@@ -78,6 +78,9 @@ using namespace std;
     case LC_DYLIB_CODE_SIGN_DRS:  return @"LC_DYLIB_CODE_SIGN_DRS";
     case LC_LINKER_OPTION:        return @"LC_LINKER_OPTION";
     case LC_LINKER_OPTIMIZATION_HINT: return @"LC_LINKER_OPTIMIZATION_HINT";
+    case LC_DYLD_CHAINED_FIXUPS: return @"LC_DYLD_CHAINED_FIXUPS";
+    case LC_DYLD_EXPORTS_TRIE: return @"LC_DYLD_EXPORTS_TRIE";
+    case LC_BUILD_VERSION: return @"LC_BUILD_VERSION";
   }
 }
 
@@ -2080,6 +2083,170 @@ using namespace std;
   return node;
 }
 
+- (MVNode *)createLCBuildVersionNode:(MVNode *)parent
+                           caption:(NSString *)caption
+                          location:(uint32_t)location
+               build_version_command:(struct build_version_command const *)build_version_command
+{
+  MVNodeSaver nodeSaver;
+  MVNode * node = [parent insertChildWithDetails:caption location:location length:build_version_command->cmdsize saver:nodeSaver];
+  
+  NSRange range = NSMakeRange(location,0);
+  NSString * lastReadHex;
+  
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                         :lastReadHex
+                         :@"Command"
+                         :[self getNameForCommand:build_version_command->cmd]];
+  
+  [node.details setAttributes:MVCellColorAttributeName,[NSColor greenColor],nil];
+
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                         :lastReadHex
+                         :@"Command Size"
+                         :[NSString stringWithFormat:@"%u", build_version_command->cmdsize]];
+  
+  [node.details setAttributes:MVCellColorAttributeName,[NSColor greenColor],
+                              MVUnderlineAttributeName,@"YES",nil];
+    
+  NSString *platform = nil;
+
+  switch(build_version_command->platform){
+    case PLATFORM_MACOS:
+        platform = @"macOS";
+        break;
+    case PLATFORM_IOS:
+        platform = @"iOS";
+        break;
+    case PLATFORM_TVOS:
+        platform = @"tvOS";
+        break;
+    case PLATFORM_WATCHOS:
+        platform = @"watchOS";
+        break;
+    case PLATFORM_BRIDGEOS:
+        platform = @"bridgeOS";
+        break;
+    case PLATFORM_MACCATALYST:
+        platform = @"Mac Catalyst";
+        break;
+    case PLATFORM_IOSSIMULATOR:
+        platform = @"iOS Simulator";
+        break;
+    case PLATFORM_TVOSSIMULATOR:
+        platform = @"tvOS Simulator";
+        break;
+    case PLATFORM_WATCHOSSIMULATOR:
+        platform = @"watchOS Simulator";
+        break;
+    case PLATFORM_DRIVERKIT:
+        platform = @"DriverKit";
+        break;
+    default:
+        platform = [NSString stringWithFormat:@"%u",build_version_command->platform];
+        break;
+    }
+  
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                         :lastReadHex
+                         :@"Platform"
+                         :platform];
+    
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  if ((build_version_command->minos & 0xff) == 0) {
+    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+            :lastReadHex
+            :@"Minimum OS Version"
+            :[NSString stringWithFormat:@"%u.%u",
+                                        (build_version_command->minos >> 16),
+                                        ((build_version_command->minos >> 8) & 0xff)]];
+  }
+  else {
+    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+            :lastReadHex
+            :@"Minimum OS Version"
+            :[NSString stringWithFormat:@"%u.%u.%u",
+                                        (build_version_command->minos >> 16),
+                                        ((build_version_command->minos >> 8) & 0xff),
+                                        (build_version_command->minos & 0xff)]];
+  }
+
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  if ((build_version_command->sdk & 0xff) == 0) {
+    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+            :lastReadHex
+            :@"SDK Version"
+            :[NSString stringWithFormat:@"%u.%u",
+                                        (build_version_command->sdk >> 16),
+                                        ((build_version_command->sdk >> 8) & 0xff)]];
+  }
+  else {
+    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+            :lastReadHex
+            :@"SDK Version"
+            :[NSString stringWithFormat:@"%u.%u.%u",
+                                        (build_version_command->sdk >> 16),
+                                        ((build_version_command->sdk >> 8) & 0xff),
+                                        (build_version_command->sdk & 0xff)]];
+  }
+
+  [dataController read_uint32:range lastReadHex:&lastReadHex];
+  [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+          :lastReadHex
+          :@"Number of tool entries"
+          :[NSString stringWithFormat:@"%u",
+                                      build_version_command->ntools]];
+
+  unsigned char *q = (unsigned char *)(build_version_command + 1);
+  for (uint32_t itool = 0; itool < build_version_command->ntools; ++itool) {
+    struct build_tool_version *tv = (struct build_tool_version *)q;
+    NSString *tool = nil;
+    switch (tv->tool) {
+        case TOOL_CLANG:
+          tool = @"Clang";
+          break;
+        case TOOL_SWIFT:
+          tool = @"Swift";
+          break;
+        case TOOL_LD:
+          tool = @"LD";
+          break;
+        default:
+          tool = [NSString stringWithFormat:@"%u", tv->tool];
+          break;
+    }
+    [dataController read_uint32:range lastReadHex:&lastReadHex];
+    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+            :lastReadHex
+            :@"Tool"
+            :tool];
+    [dataController read_uint32:range lastReadHex:&lastReadHex];
+    if ((tv->version & 0xff) == 0) {
+      [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+              :lastReadHex
+              :@"Tool Version"
+              :[NSString stringWithFormat:@"%u.%u",
+                                          (tv->version >> 16),
+                                          ((tv->version >> 8) & 0xff)]];
+    }
+    else {
+      [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+              :lastReadHex
+              :@"Tool Version"
+              :[NSString stringWithFormat:@"%u.%u.%u",
+                                          (tv->version >> 16),
+                                          ((tv->version >> 8) & 0xff),
+                                          (tv->version & 0xff)]];
+    }
+    q += sizeof(*tv);
+  }
+
+  return node;
+}
+
 //-----------------------------------------------------------------------------
 -(MVNode *)createLoadCommandNode:(MVNode *)parent
                          caption:(NSString *)caption
@@ -2275,6 +2442,8 @@ using namespace std;
     case LC_DATA_IN_CODE:
     case LC_DYLIB_CODE_SIGN_DRS:
     case LC_LINKER_OPTIMIZATION_HINT:
+    case LC_DYLD_CHAINED_FIXUPS:
+    case LC_DYLD_EXPORTS_TRIE:
     {
       MATCH_STRUCT(linkedit_data_command,location)
       node = [self createLCLinkeditDataNode:parent 
@@ -2407,6 +2576,14 @@ using namespace std;
                                     caption:caption
                                    location:location
                       linker_option_command:linker_option_command];
+    } break;
+    case LC_BUILD_VERSION:
+    {
+      MATCH_STRUCT(build_version_command, location);
+      node = [self createLCBuildVersionNode:parent
+                                    caption:caption
+                                    location:location
+                      build_version_command:build_version_command];
     } break;
     default:
       [self createDataNode:parent 
